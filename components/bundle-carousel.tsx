@@ -107,17 +107,21 @@ export function BundleCarousel({ bundles }: BundleCarouselProps) {
     }
 
     return (
-        <div className="relative">
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentIndex}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.5 }}
-                    className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white"
-                >
-                    <div className="relative h-[600px] w-full">
+        <div className="relative overflow-hidden rounded-[2.5rem] shadow-2xl border-8 border-white">
+            {/* Static container with fixed height */}
+            <div className="relative h-[600px] w-full">
+                <AnimatePresence initial={false}>
+                    <motion.div
+                        key={currentIndex}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                            duration: 0.8,
+                            ease: "easeInOut"
+                        }}
+                        className="absolute inset-0"
+                    >
                         <Image
                             src={bundleImage}
                             alt={currentBundle.name}
@@ -157,9 +161,9 @@ export function BundleCarousel({ bundles }: BundleCarouselProps) {
                                 </Button>
                             </div>
                         </div>
-                    </div>
-                </motion.div>
-            </AnimatePresence>
+                    </motion.div>
+                </AnimatePresence>
+            </div>
 
             {/* Navigation Arrows */}
             {bundles.length > 1 && (
