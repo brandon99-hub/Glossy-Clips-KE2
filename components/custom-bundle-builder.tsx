@@ -185,48 +185,75 @@ export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
             {/* Product Selection Grid */}
             <div>
                 <h3 className="font-semibold mb-4">Select Products ({selectedProducts.length} selected)</h3>
+
+                {/* Selected Products Pills */}
+                {selectedProducts.length > 0 && (
+                    <div className="mb-4 p-3 bg-rose-50 rounded-lg border border-rose-200">
+                        <p className="text-xs font-medium text-rose-900 mb-2">Selected:</p>
+                        <div className="flex flex-wrap gap-2">
+                            {selectedItems.map((product) => (
+                                <div
+                                    key={product.id}
+                                    className="inline-flex items-center gap-1.5 bg-white border border-rose-300 rounded-full px-3 py-1.5 text-sm"
+                                >
+                                    <span className="font-medium text-rose-900">{product.name}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleProduct(product.id)}
+                                        className="text-rose-600 hover:text-rose-800 font-bold"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {filteredProducts.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                         <p>No products found matching your search.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
-                        {filteredProducts.map((product) => {
-                            const isSelected = selectedProducts.includes(product.id)
-                            return (
-                                <button
-                                    key={product.id}
-                                    type="button"
-                                    onClick={() => toggleProduct(product.id)}
-                                    className={`relative p-3 rounded-lg border-2 text-left transition-all ${isSelected
-                                        ? "border-primary bg-primary/10 shadow-md"
-                                        : "border-border hover:border-primary/50"
-                                        }`}
-                                >
-                                    {/* Checkmark */}
-                                    {isSelected && (
-                                        <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                                            <Check className="w-4 h-4 text-white" />
+                    <div className="overflow-x-auto pb-4 -mx-4 px-4">
+                        <div className="flex gap-4 min-w-min">
+                            {filteredProducts.map((product) => {
+                                const isSelected = selectedProducts.includes(product.id)
+                                return (
+                                    <button
+                                        key={product.id}
+                                        type="button"
+                                        onClick={() => toggleProduct(product.id)}
+                                        className={`relative p-4 rounded-xl border-2 text-left transition-all flex-shrink-0 w-48 md:w-56 ${isSelected
+                                            ? "border-rose-500 bg-rose-50 shadow-lg scale-105"
+                                            : "border-gray-200 hover:border-rose-300 hover:shadow-md"
+                                            }`}
+                                    >
+                                        {/* Checkmark */}
+                                        {isSelected && (
+                                            <div className="absolute top-3 right-3 w-7 h-7 bg-rose-500 rounded-full flex items-center justify-center shadow-md z-10">
+                                                <Check className="w-5 h-5 text-white" />
+                                            </div>
+                                        )}
+
+                                        {/* Product Image */}
+                                        <div className="relative h-40 md:h-48 mb-3 bg-gray-100 rounded-lg overflow-hidden">
+                                            <Image
+                                                src={product.images[0] || "/placeholder.svg"}
+                                                alt={product.name}
+                                                fill
+                                                className="object-cover"
+                                            />
                                         </div>
-                                    )}
 
-                                    {/* Product Image */}
-                                    <div className="relative h-24 mb-2 bg-muted rounded-md overflow-hidden">
-                                        <Image
-                                            src={product.images[0] || "/placeholder.svg"}
-                                            alt={product.name}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
-
-                                    {/* Product Info */}
-                                    <p className="text-sm font-medium line-clamp-2 mb-1">{product.name}</p>
-                                    <p className="text-xs text-muted-foreground">KES {product.price.toLocaleString()}</p>
-                                    <p className="text-xs text-muted-foreground capitalize">{product.category.replace("-", " ")}</p>
-                                </button>
-                            )
-                        })}
+                                        {/* Product Info */}
+                                        <p className="text-base font-semibold line-clamp-2 mb-2">{product.name}</p>
+                                        <p className="text-sm text-rose-600 font-bold mb-1">KES {product.price.toLocaleString()}</p>
+                                        <p className="text-xs text-gray-500 capitalize">{product.category.replace("-", " ")}</p>
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </div>
                 )}
             </div>
