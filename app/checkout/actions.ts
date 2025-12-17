@@ -18,6 +18,28 @@ export async function createOrder(data: OrderInput) {
     const validated = orderSchema.parse(data)
     const referenceCode = generateReferenceCode()
 
+    // Check stock availability for all items before creating order
+    for (const item of validated.items) {
+      const product = await sql`
+        SELECT stock_quantity, name 
+        FROM products 
+        WHERE id = ${item.product_id}
+      `
+
+      if (product.length === 0) {
+        return { success: false, error: `Product not found` }
+      }
+
+      const currentStock = product[0].stock_quantity
+      if (currentStock < item.quantity) {
+        return {
+          success: false,
+          error: `Insufficient stock for ${product[0].name}. Only ${currentStock} available.`
+        }
+      }
+    }
+
+    // Create the order
     await sql`
       INSERT INTO orders (
         reference_code, 
@@ -43,6 +65,15 @@ export async function createOrder(data: OrderInput) {
         'pending'
       )
     `
+
+    // Deduct inventory for each product
+    for (const item of validated.items) {
+      await sql`
+        UPDATE products 
+        SET stock_quantity = stock_quantity - ${item.quantity}
+        WHERE id = ${item.product_id}
+      `
+    }
 
     return { success: true, referenceCode }
   } catch (error) {
