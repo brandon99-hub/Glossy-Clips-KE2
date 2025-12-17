@@ -18,6 +18,7 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState<number | null>(null)
+  const [imageUrl, setImageUrl] = useState("")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -28,6 +29,7 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
 
     setShowForm(false)
     setLoading(false)
+    setImageUrl("")
     router.refresh()
   }
 
@@ -54,8 +56,36 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
               <Input id="username" name="username" placeholder="@username" required className="mt-1" />
             </div>
             <div>
-              <Label htmlFor="profile_image">Profile Image URL</Label>
-              <Input id="profile_image" name="profile_image" placeholder="/placeholder.svg" className="mt-1" />
+              <Label htmlFor="profile_image">Profile Image</Label>
+              <div className="flex gap-2 mt-1">
+                <Input id="profile_image" name="profile_image" type="hidden" value={imageUrl} />
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    const formData = new FormData()
+                    formData.append("file", file)
+
+                    const res = await fetch("/api/upload", {
+                      method: "POST",
+                      body: formData,
+                    })
+
+                    const data = await res.json()
+                    if (data.success) {
+                      setImageUrl(data.url)
+                    }
+                  }}
+                />
+              </div>
+              {imageUrl && (
+                <div className="mt-2 relative w-12 h-12 rounded-full overflow-hidden border">
+                  <Image src={imageUrl} alt="Preview" fill className="object-cover" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -89,11 +119,11 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
           <div key={t.id} className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-start gap-3">
               <Image
-                src={t.profile_image || "/placeholder.svg?height=60&width=60"}
+                src={t.profile_image || "/pfp.jpg"}
                 alt={t.username}
                 width={40}
                 height={40}
-                className="rounded-full"
+                className="rounded-full object-cover"
               />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm">@{t.username}</p>

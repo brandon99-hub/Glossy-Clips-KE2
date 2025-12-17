@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Clock, CheckCircle, Package, MapPin, Loader2 } from "lucide-react"
+import { Clock, CheckCircle, Package, MapPin, Loader2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import type { Order } from "@/lib/db"
 import { updateOrderStatus } from "./actions"
 
@@ -19,7 +21,29 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   const [loading, setLoading] = useState<number | null>(null)
   const [filter, setFilter] = useState<string>("all")
 
-  const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+
+  const filteredOrders = orders.filter((o) => {
+    const matchesStatus = filter === "all" || o.status === filter
+    const matchesSearch =
+      o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.reference_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.phone_number.includes(searchQuery)
+
+    let matchesDate = true
+    if (startDate) {
+      matchesDate = matchesDate && new Date(o.created_at) >= new Date(startDate)
+    }
+    if (endDate) {
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999) // End of the day
+      matchesDate = matchesDate && new Date(o.created_at) <= end
+    }
+
+    return matchesStatus && matchesSearch && matchesDate
+  })
 
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     setLoading(orderId)
@@ -30,17 +54,44 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
   return (
     <div>
+      {/* Search and Filters */}
+      <div className="bg-card border border-border rounded-xl p-4 mb-6 space-y-4">
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <Label>Search</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Customer, reference, phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:col-span-2">
+            <div>
+              <Label>From Date</Label>
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div>
+              <Label>To Date</Label>
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Filter tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
         {["all", "pending", "paid", "packed", "collected"].map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              filter === status
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === status
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
           >
             {status === "all" ? "All" : statusConfig[status as keyof typeof statusConfig].label}
           </button>

@@ -64,6 +64,7 @@ export type SecretCode = {
   order_id: number | null
   discount_percent: number
   is_used: boolean
+  is_exported?: boolean
   expires_at: string | null
   created_at: string
 }

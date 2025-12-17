@@ -24,7 +24,8 @@ $scripts = @(
     "scripts/005-add-reviews.sql",
     "scripts/006-add-wishlist.sql",
     "scripts/007-add-inventory-alerts.sql",
-    "scripts/008-add-pickup-mtaani.sql"
+    "scripts/008-add-pickup-mtaani.sql",
+    "scripts/009-seed-admin.sql"
 )
 
 Write-Host "`nRunning database migrations..." -ForegroundColor Cyan
@@ -43,15 +44,18 @@ foreach ($script in $scripts) {
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✓ Success: $script`n" -ForegroundColor Green
                 $successCount++
-            } else {
+            }
+            else {
                 Write-Host "✗ Failed: $script`n" -ForegroundColor Red
                 $failCount++
             }
-        } catch {
+        }
+        catch {
             Write-Host "✗ Error running $script : $_`n" -ForegroundColor Red
             $failCount++
         }
-    } else {
+    }
+    else {
         Write-Host "✗ File not found: $script`n" -ForegroundColor Red
         $failCount++
     }
@@ -65,6 +69,7 @@ Write-Host "================================`n" -ForegroundColor Cyan
 
 if ($failCount -eq 0) {
     Write-Host "✓ All migrations completed successfully!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "⚠ Some migrations failed. Please check the errors above." -ForegroundColor Yellow
 }

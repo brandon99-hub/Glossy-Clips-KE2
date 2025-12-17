@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
@@ -13,6 +13,19 @@ import { useCart } from "@/lib/cart-context"
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalAmount } = useCart()
   const [deliveryMethod, setDeliveryMethod] = useState<"self-pickup" | "pickup-mtaani">("self-pickup")
+
+  // Load saved delivery method
+  useEffect(() => {
+    const saved = localStorage.getItem("deliveryMethod")
+    if (saved === "pickup-mtaani") {
+      setDeliveryMethod("pickup-mtaani")
+    }
+  }, [])
+
+  // Save delivery method whenever it changes
+  useEffect(() => {
+    localStorage.setItem("deliveryMethod", deliveryMethod)
+  }, [deliveryMethod])
 
   const estimatedDeliveryFee = deliveryMethod === "pickup-mtaani" ? 100 : 0
   const estimatedTotal = totalAmount + estimatedDeliveryFee

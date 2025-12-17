@@ -44,7 +44,11 @@ export function TestimonialsCarousel({ testimonials }: { testimonials: Testimoni
           {/* DM Style */}
           <div className="flex items-start gap-3">
             <Image
-              src={testimonials[current].profile_image || "/placeholder.svg?height=60&width=60"}
+              src={
+                !testimonials[current].profile_image || testimonials[current].profile_image.includes("placeholder.svg")
+                  ? "/pfp.jpg"
+                  : testimonials[current].profile_image
+              }
               alt={testimonials[current].username}
               width={40}
               height={40}

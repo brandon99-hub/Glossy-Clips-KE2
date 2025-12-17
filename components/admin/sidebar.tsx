@@ -11,7 +11,7 @@ const navItems = [
   { href: "/admin/orders", icon: Package, label: "Orders" },
   { href: "/admin/bundles", icon: PackageOpen, label: "Bundles" },
   { href: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
-  { href: "/admin/gift-cards", icon: Gift, label: "Gift Cards" },
+
   { href: "/admin/qr-codes", icon: QrCode, label: "QR Codes" },
 ]
 

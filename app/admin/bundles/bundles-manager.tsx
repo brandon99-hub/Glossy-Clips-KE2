@@ -42,6 +42,7 @@ export function BundlesManager({
   const [bundleName, setBundleName] = useState("")
   const [description, setDescription] = useState("")
   const [bundlePrice, setBundlePrice] = useState("")
+  const [discountPercentage, setDiscountPercentage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const originalPrice = selectedProducts.reduce((sum, id) => {
@@ -65,11 +66,12 @@ export function BundlesManager({
     })
 
     if (result.success && result.bundle) {
-      setBundles([result.bundle, ...bundles])
+      setBundles([result.bundle as unknown as Bundle, ...bundles])
       setShowForm(false)
       setBundleName("")
       setDescription("")
       setBundlePrice("")
+      setDiscountPercentage("")
       setSelectedProducts([])
     }
     setIsSubmitting(false)
@@ -143,18 +145,16 @@ export function BundlesManager({
                       key={product.id}
                       type="button"
                       onClick={() => toggleProduct(product.id)}
-                      className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-colors ${
-                        selectedProducts.includes(product.id)
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      }`}
+                      className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-colors ${selectedProducts.includes(product.id)
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                        }`}
                     >
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          selectedProducts.includes(product.id)
-                            ? "border-primary bg-primary"
-                            : "border-muted-foreground"
-                        }`}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedProducts.includes(product.id)
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground"
+                          }`}
                       >
                         {selectedProducts.includes(product.id) && <Check className="w-3 h-3 text-white" />}
                       </div>
@@ -168,27 +168,54 @@ export function BundlesManager({
               </div>
 
               {selectedProducts.length >= 2 && (
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Original Total:</span>
                     <span className="line-through">KES {originalPrice.toLocaleString()}</span>
                   </div>
 
-                  <div>
-                    <Label htmlFor="price">Bundle Price (KES)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      placeholder={`e.g. ${Math.round(originalPrice * 0.85)}`}
-                      value={bundlePrice}
-                      onChange={(e) => setBundlePrice(e.target.value)}
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="discount">Discount (%)</Label>
+                      <Input
+                        id="discount"
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 15"
+                        value={discountPercentage}
+                        onChange={(e) => {
+                          const discount = Number(e.target.value)
+                          setDiscountPercentage(e.target.value)
+                          // Auto-calculate price based on discount
+                          const price = Math.round(originalPrice * (1 - discount / 100))
+                          setBundlePrice(price.toString())
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="price">Final Price (KES)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        value={bundlePrice}
+                        onChange={(e) => {
+                          setBundlePrice(e.target.value)
+                          // Recalculate discount based on price
+                          const price = Number(e.target.value)
+                          if (originalPrice > 0) {
+                            const discount = Math.round(((originalPrice - price) / originalPrice) * 100)
+                            setDiscountPercentage(discount.toString())
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {bundlePrice && (
-                    <div className="flex justify-between text-sm font-medium text-green-600">
+                    <div className="flex justify-between text-sm font-medium text-green-600 bg-green-50 p-2 rounded">
                       <span>Customer Saves:</span>
-                      <span>KES {savings.toLocaleString()}</span>
+                      <span>KES {(originalPrice - Number(bundlePrice)).toLocaleString()}</span>
                     </div>
                   )}
                 </div>
