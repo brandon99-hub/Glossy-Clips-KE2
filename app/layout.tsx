@@ -1,0 +1,57 @@
+import type React from "react"
+import type { Metadata, Viewport } from "next"
+import { Poppins, Dancing_Script } from "next/font/google"
+import { Analytics } from "@vercel/analytics/next"
+import { Toaster } from "sonner"
+import { CartProvider } from "@/lib/cart-context"
+import { WishlistProvider } from "@/lib/wishlist-context"
+import { Header } from "@/components/header"
+import { MobileNav } from "@/components/mobile-nav"
+import { WhatsAppButton } from "@/components/whatsapp-button"
+import "./globals.css"
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
+})
+
+const dancing = Dancing_Script({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-dancing",
+})
+
+export const metadata: Metadata = {
+  title: "GLOSSYCLIPSKE | Hair Clips & Lip Gloss",
+  description:
+    "Premium hair clips and lip gloss for the glow-up generation. Shop now and get a free gift card with every order! Based in Kenya 🇰🇪",
+  generator: 'v0.app'
+}
+
+export const viewport: Viewport = {
+  themeColor: "#f43f5e",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className={`${poppins.variable} ${dancing.variable} font-sans antialiased`}>
+        <CartProvider>
+          <WishlistProvider>
+            <Header />
+            <main className="min-h-screen pb-20 md:pb-0">{children}</main>
+            <MobileNav />
+            <WhatsAppButton />
+          </WishlistProvider>
+        </CartProvider>
+        <Toaster position="top-center" richColors />
+        <Analytics />
+      </body>
+    </html>
+  )
+}

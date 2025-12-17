@@ -1,0 +1,122 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
+import { Plus, Trash2, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import type { Testimonial } from "@/lib/db"
+import { addTestimonial, deleteTestimonial } from "./actions"
+
+export function TestimonialsManager({ testimonials }: { testimonials: Testimonial[] }) {
+  const router = useRouter()
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState<number | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+
+    const formData = new FormData(e.currentTarget)
+    await addTestimonial(formData)
+
+    setShowForm(false)
+    setLoading(false)
+    router.refresh()
+  }
+
+  const handleDelete = async (id: number) => {
+    setDeleting(id)
+    await deleteTestimonial(id)
+    router.refresh()
+    setDeleting(null)
+  }
+
+  return (
+    <div>
+      {/* Add button */}
+      <Button onClick={() => setShowForm(!showForm)} className="mb-6 bg-primary hover:bg-primary/90">
+        <Plus className="w-4 h-4 mr-2" /> Add Testimonial
+      </Button>
+
+      {/* Add form */}
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-4 mb-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" name="username" placeholder="@username" required className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="profile_image">Profile Image URL</Label>
+              <Input id="profile_image" name="profile_image" placeholder="/placeholder.svg" className="mt-1" />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="message">Message</Label>
+            <Textarea id="message" name="message" placeholder="What they said..." required className="mt-1" rows={3} />
+          </div>
+
+          <div>
+            <Label htmlFor="emoji_reactions">Emoji Reactions (comma-separated)</Label>
+            <Input id="emoji_reactions" name="emoji_reactions" placeholder="fire,heart,sparkles" className="mt-1" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Available: fire, heart, sparkles, crying, gift, laughing, hundred, skull, money, heart_eyes
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="bg-transparent">
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* Testimonials list */}
+      <div className="space-y-4">
+        {testimonials.map((t) => (
+          <div key={t.id} className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Image
+                src={t.profile_image || "/placeholder.svg?height=60&width=60"}
+                alt={t.username}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">@{t.username}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t.message}</p>
+                {t.emoji_reactions && (
+                  <p className="text-xs text-muted-foreground mt-2">Reactions: {t.emoji_reactions}</p>
+                )}
+              </div>
+              <button
+                onClick={() => handleDelete(t.id)}
+                disabled={deleting === t.id}
+                className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+              >
+                {deleting === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {testimonials.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">No testimonials yet</div>
+        )}
+      </div>
+    </div>
+  )
+}
