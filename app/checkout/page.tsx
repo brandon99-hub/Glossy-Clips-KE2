@@ -34,11 +34,17 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
   })
 
   // Get delivery method from URL params
+  // Get delivery method from URL params or localStorage
   useEffect(() => {
+    const saved = localStorage.getItem("deliveryMethod")
+    if (saved === "pickup-mtaani") {
+      setDeliveryMethod("pickup-mtaani")
+    }
+
     async function getParams() {
       const params = await searchParams
-      if (params.delivery === "pickup-mtaani") {
-        setDeliveryMethod("pickup-mtaani")
+      if (params.delivery) {
+        setDeliveryMethod(params.delivery as "self-pickup" | "pickup-mtaani")
       }
     }
     getParams()

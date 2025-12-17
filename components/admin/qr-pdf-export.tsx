@@ -24,7 +24,7 @@ export function QRCodePDFExporter({ code }: QRCodePDFExporterProps) {
         setLoading(true)
 
         try {
-            // Premium Card Design (105mm x 148mm - A6)
+            // Simple & Soft Design (105mm x 148mm - A6)
             const doc = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
@@ -33,73 +33,34 @@ export function QRCodePDFExporter({ code }: QRCodePDFExporterProps) {
 
             const width = 105
             const height = 148
-            const centerX = width / 2
 
-            // -- Background --
-            doc.setFillColor(255, 255, 255)
+            // Soft Pink Background (Pale Pink)
+            doc.setFillColor(255, 240, 245)
             doc.rect(0, 0, width, height, "F")
 
-            // Border
-            doc.setDrawColor(236, 72, 153) // Pink-500
-            doc.setLineWidth(1)
-            doc.roundedRect(5, 5, width - 10, height - 10, 3, 3, "S")
-
-            // -- Header --
-            // Pink Header Box
-            doc.setFillColor(253, 242, 248) // Pink-50
-            doc.roundedRect(6, 6, width - 12, 35, 2, 2, "F")
-
+            // -- Logo / Brand (Small, Top Left) --
             doc.setFont("helvetica", "bold")
-            doc.setFontSize(16)
-            doc.setTextColor(236, 72, 153) // Pink branding
-            doc.text("GLOSSYCLIPSKE", centerX, 20, { align: "center" })
-
-            doc.setFont("helvetica", "normal")
             doc.setFontSize(10)
-            doc.setTextColor(80, 80, 80)
-            doc.text("A Little Secret Just For You \u2764", centerX, 30, { align: "center" }) // Heart
+            doc.setTextColor(236, 72, 153) // Pink-500
+            doc.text("GLOSSYCLIPSKE", 8, 12, { align: "left" }) // Small logo text
 
-            // -- Discount Highlight --
-            doc.setFont("helvetica", "bold")
-            doc.setFontSize(32)
-            doc.setTextColor(0, 0, 0)
-            doc.text(`${code.discount_percent}% OFF`, centerX, 55, { align: "center" })
+            // -- QR Code (Center) --
+            const qrSize = 60
+            const centerX = width / 2
+            const centerY = height / 2
+            doc.addImage(code.qrCodeData, "PNG", centerX - (qrSize / 2), centerY - (qrSize / 2) - 10, qrSize, qrSize)
 
+            // -- Message (Below QR) --
+            doc.setFont("helvetica", "normal")
+            doc.setFontSize(12)
+            doc.setTextColor(50, 50, 50)
+            doc.text(`${code.discount_percent}% OFF`, centerX, centerY + (qrSize / 2) + 5, { align: "center" })
+
+            // -- Secret Code (Small, Minimal) --
+            doc.setFont("courier", "normal")
             doc.setFontSize(10)
             doc.setTextColor(100, 100, 100)
-            doc.text("ON YOUR NEXT ORDER", centerX, 62, { align: "center" })
-
-            // -- QR Code --
-            const qrSize = 55
-            doc.addImage(code.qrCodeData, "PNG", centerX - (qrSize / 2), 70, qrSize, qrSize)
-
-            // -- Code Box --
-            doc.setFillColor(245, 245, 245)
-            doc.roundedRect(centerX - 30, 128, 60, 12, 1, 1, "F")
-
-            doc.setFont("courier", "bold") // Monospace for code
-            doc.setFontSize(14)
-            doc.setTextColor(0, 0, 0)
-            doc.text(code.code, centerX, 136, { align: "center" })
-
-            // -- Footer (Dates & Order) --
-            doc.setFont("helvetica", "normal")
-            doc.setFontSize(8)
-            doc.setTextColor(150, 150, 150)
-
-            let footerY = 110 // Moved up slightly if needed, but plotting below code
-            // We'll put order ref above the code box maybe? Or below at very bottom
-
-            // Re-positioning Footer info
-            const bottomY = 70 + qrSize + 5
-            if (code.order_reference) {
-                doc.text(`Linked to Order #${code.order_reference}`, centerX, 126, { align: "center" })
-            }
-
-            // Expiry at very bottom
-            if (code.expires_at) {
-                doc.text(`Valid until ${new Date(code.expires_at).toLocaleDateString()}`, centerX, height - 10, { align: "center" })
-            }
+            doc.text(code.code, centerX, centerY + (qrSize / 2) + 12, { align: "center" })
 
             doc.save(`QR-${code.code}.pdf`)
 

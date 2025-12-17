@@ -4,10 +4,16 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageCircle, X } from "lucide-react"
 
+import { usePathname } from "next/navigation"
+
 const WHATSAPP_NUMBER = "254745717591"
 
 export function WhatsAppButton() {
+  const pathname = usePathname()
   const [showTooltip, setShowTooltip] = useState(false)
+
+  // Don't show in admin area
+  if (pathname?.startsWith("/admin")) return null
 
   const handleClick = () => {
     const message = encodeURIComponent("Hey! I have a question about your products on GLOSSYCLIPSKE")

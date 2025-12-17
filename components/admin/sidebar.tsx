@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen } from "lucide-react"
+import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { adminLogout } from "@/app/admin/login/actions"
 
 const navItems = [
   { href: "/admin/orders", icon: Package, label: "Orders" },
+  { href: "/admin/products", icon: Tag, label: "Products" },
   { href: "/admin/bundles", icon: PackageOpen, label: "Bundles" },
   { href: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
 
