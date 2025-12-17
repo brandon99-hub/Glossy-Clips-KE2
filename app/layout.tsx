@@ -27,7 +27,12 @@ export const metadata: Metadata = {
   title: "GLOSSYCLIPSKE | Hair Clips & Lip Gloss",
   description:
     "Premium hair clips and lip gloss for the glow-up generation. Shop now and get a free gift card with every order! Based in Kenya 🇰🇪",
-  generator: 'v0.app'
+  generator: 'v0.app',
+  icons: {
+    icon: '/logo.jpeg',
+    shortcut: '/logo.jpeg',
+    apple: '/logo.jpeg',
+  },
 }
 
 export const viewport: Viewport = {
