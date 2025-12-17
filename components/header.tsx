@@ -2,12 +2,24 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingBag } from "lucide-react"
+import { ShoppingBag, Settings } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useState } from "react"
 
 export function Header() {
   const { totalItems } = useCart()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    // Check if admin session exists
+    const checkAdmin = () => {
+      const cookies = document.cookie.split(';')
+      const hasAdminSession = cookies.some(cookie => cookie.trim().startsWith('admin_session='))
+      setIsAdmin(hasAdminSession)
+    }
+    checkAdmin()
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border transition-all">
@@ -34,7 +46,15 @@ export function Header() {
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center z-20">
+        <div className="flex items-center gap-2 z-20">
+          {/* Admin Settings - Only visible when logged in */}
+          {isAdmin && (
+            <Link href="/admin/settings" className="p-2.5 hover:bg-rose-50 rounded-full transition-colors group">
+              <Settings className="h-5 w-5 text-gray-700 group-hover:text-rose-600 transition-colors" />
+            </Link>
+          )}
+
+          {/* Cart */}
           <Link href="/cart" className="relative p-2.5 hover:bg-rose-50 rounded-full transition-colors group">
             <ShoppingBag className="h-5 w-5 text-gray-700 group-hover:text-rose-600 transition-colors" />
             <AnimatePresence>

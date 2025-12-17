@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag } from "lucide-react"
+import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { adminLogout } from "@/app/admin/login/actions"
@@ -12,7 +12,6 @@ const navItems = [
   { href: "/admin/products", icon: Tag, label: "Products" },
   { href: "/admin/bundles", icon: PackageOpen, label: "Bundles" },
   { href: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
-
   { href: "/admin/qr-codes", icon: QrCode, label: "QR Codes" },
 ]
 
@@ -47,10 +46,17 @@ export function AdminSidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-border flex items-center justify-between">
           <Link href="/admin" className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
             <span className="font-semibold">GLOSSYCLIPSKE</span>
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            title="Settings"
+          >
+            <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground" />
           </Link>
         </div>
 
@@ -78,13 +84,23 @@ export function AdminSidebar() {
         </nav>
 
         <div className="p-4 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground w-full transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Logout
-          </button>
+          <div className="flex gap-2">
+            <Link
+              href="/admin/settings"
+              onClick={() => setMobileOpen(false)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+              Settings
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </button>
+          </div>
         </div>
       </aside>
     </>
