@@ -8,6 +8,7 @@ import { WishlistProvider } from "@/lib/wishlist-context"
 import { Header } from "@/components/header"
 import { MobileNav } from "@/components/mobile-nav"
 import { WhatsAppButton } from "@/components/whatsapp-button"
+import { Footer } from "@/components/footer"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -45,11 +46,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WishlistProvider>
             <Header />
             <main className="min-h-screen pb-20 md:pb-0">{children}</main>
+            <Footer />
             <MobileNav />
             <WhatsAppButton />
           </WishlistProvider>
         </CartProvider>
-        <Toaster position="top-center" richColors />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: '#ffe4e6', // rose-100 - lighter pink
+              border: '1px solid #fda4af', // rose-300
+              color: '#881337', // rose-950
+            },
+            classNames: {
+              actionButton: "bg-black text-white hover:bg-gray-800",
+              cancelButton: "bg-rose-100 text-rose-900",
+            },
+          }}
+        />
         <Analytics />
       </body>
     </html>

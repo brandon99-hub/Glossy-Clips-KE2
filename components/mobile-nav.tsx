@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ShoppingBag, Grid3X3, Heart } from "lucide-react"
+import { Home, ShoppingBag, Grid3X3, Heart, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/lib/cart-context"
 
@@ -13,8 +13,8 @@ export function MobileNav() {
   const links = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/shop", icon: Grid3X3, label: "Shop" },
+    { href: "/bundles", icon: Package, label: "Bundles" },
     { href: "/testimonials", icon: Heart, label: "Love" },
-    { href: "/cart", icon: ShoppingBag, label: "Cart", badge: totalItems },
   ]
 
   return (
@@ -32,14 +32,7 @@ export function MobileNav() {
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <div className="relative">
-                <Icon className="h-5 w-5" />
-                {link.badge && link.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                    {link.badge}
-                  </span>
-                )}
-              </div>
+              <Icon className="h-5 w-5" />
               <span>{link.label}</span>
             </Link>
           )

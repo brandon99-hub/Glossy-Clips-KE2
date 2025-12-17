@@ -14,7 +14,7 @@ const fallbackProducts: Product[] = [
     stock: 10,
     is_active: true,
     is_secret: false,
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
   },
   {
     id: 2,
@@ -27,7 +27,7 @@ const fallbackProducts: Product[] = [
     stock: 15,
     is_active: true,
     is_secret: false,
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
   },
   {
     id: 3,
@@ -40,7 +40,7 @@ const fallbackProducts: Product[] = [
     stock: 8,
     is_active: true,
     is_secret: false,
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
   },
   {
     id: 4,
@@ -53,7 +53,7 @@ const fallbackProducts: Product[] = [
     stock: 20,
     is_active: true,
     is_secret: false,
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
   },
   {
     id: 5,
@@ -66,7 +66,7 @@ const fallbackProducts: Product[] = [
     stock: 12,
     is_active: true,
     is_secret: false,
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
   },
   {
     id: 6,
@@ -79,69 +79,86 @@ const fallbackProducts: Product[] = [
     stock: 25,
     is_active: true,
     is_secret: false,
-    created_at: new Date(),
+    created_at: new Date().toISOString(),
   },
 ]
+
+import { SearchInput } from "@/components/search-input"
 
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>
+  searchParams: Promise<{ category?: string; search?: string }>
 }) {
-  const { category } = await searchParams
+  const { category, search } = await searchParams
 
   let products: Product[] = fallbackProducts
 
   try {
-    let dbProducts: Product[]
-    if (category) {
-      dbProducts = await sql<Product[]>`
+    if (search) {
+      products = await sql`
+        SELECT * FROM products 
+        WHERE is_active = true 
+        AND is_secret = false 
+        AND (name ILIKE ${'%' + search + '%'} OR description ILIKE ${'%' + search + '%'})
+        ORDER BY created_at DESC
+      ` as unknown as Product[]
+    } else if (category) {
+      products = await sql`
         SELECT * FROM products 
         WHERE is_active = true AND is_secret = false AND category = ${category}
         ORDER BY created_at DESC
-      `
+      ` as unknown as Product[]
     } else {
-      dbProducts = await sql<Product[]>`
+      products = await sql`
         SELECT * FROM products 
         WHERE is_active = true AND is_secret = false
         ORDER BY created_at DESC
-      `
-    }
-    if (dbProducts.length > 0) {
-      products = dbProducts
-    } else if (category) {
-      // Filter fallback products by category
-      products = fallbackProducts.filter((p) => p.category === category)
+      ` as unknown as Product[]
     }
   } catch (error) {
-    // Database not set up, use fallback and filter by category if needed
-    if (category) {
+    // Fallback filtering
+    if (search) {
+      products = fallbackProducts.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.description.toLowerCase().includes(search.toLowerCase())
+      )
+    } else if (category) {
       products = fallbackProducts.filter((p) => p.category === category)
     }
   }
 
-  const categoryTitle = category === "hair-clip" ? "Hair Clips" : category === "gloss" ? "Lip Gloss" : "All Products"
+  const title = search ? `Search: "${search}"` : (category === "hair-clip" ? "Hair Clips" : category === "gloss" ? "Lip Gloss" : "All Products")
 
   return (
     <div className="py-8 px-4">
       <div className="container mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold mb-2">{categoryTitle}</h1>
-        <p className="text-muted-foreground mb-8">
-          {products.length} {products.length === 1 ? "product" : "products"}
-        </p>
-
-        {/* Filter Tabs - Updated to hair-clip */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          <FilterTab href="/shop" active={!category}>
-            All
-          </FilterTab>
-          <FilterTab href="/shop?category=hair-clip" active={category === "hair-clip"}>
-            Hair Clips
-          </FilterTab>
-          <FilterTab href="/shop?category=gloss" active={category === "gloss"}>
-            Lip Gloss
-          </FilterTab>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">{title}</h1>
+            <p className="text-muted-foreground">
+              {products.length} {products.length === 1 ? "product" : "products"}
+            </p>
+          </div>
+          <div className="w-full md:w-72">
+            <SearchInput />
+          </div>
         </div>
+
+        {/* Filter Tabs - Hide if searching to avoid confusion, or keep? Keeping is fine but reset search when clicked is handled by Link behavior usually, but here we might want to keep it simple */}
+        {!search && (
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+            <FilterTab href="/shop" active={!category}>
+              All
+            </FilterTab>
+            <FilterTab href="/shop?category=hair-clip" active={category === "hair-clip"}>
+              Hair Clips
+            </FilterTab>
+            <FilterTab href="/shop?category=gloss" active={category === "gloss"}>
+              Lip Gloss
+            </FilterTab>
+          </div>
+        )}
 
         {products.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -171,9 +188,8 @@ function FilterTab({
   return (
     <a
       href={href}
-      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-        active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
-      }`}
+      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+        }`}
     >
       {children}
     </a>

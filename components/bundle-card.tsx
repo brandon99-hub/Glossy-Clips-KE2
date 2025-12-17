@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
+import { toast } from "sonner"
 
 interface Bundle {
   id: number
@@ -14,63 +15,102 @@ interface Bundle {
   original_price: number
   bundle_price: number
   savings: number
+  bundle_image?: string
   products?: { id: number; name: string; images: string[] }[]
 }
+
+const DEFAULT_BUNDLE_IMAGES = [
+  "/cute summer fridays lip gloss key chain charm….jpg",
+  "/i love the new charms.jpg",
+  "/Keep your lippie with you wherever you go by….jpg",
+  "/my pic.jpg",
+]
 
 export function BundleCard({ bundle }: { bundle: Bundle }) {
   const { addItem } = useCart()
 
-  const handleAddBundle = () => {
-    addItem({
-      id: `bundle-${bundle.id}`,
-      name: bundle.name,
-      price: bundle.bundle_price,
-      image: bundle.products?.[0]?.images?.[0] || "/placeholder.svg",
-      quantity: 1,
-    })
+  const handleAddBundle = async () => {
+    try {
+      // Fetch product details
+      const response = await fetch(`/api/bundles/${bundle.id}/products`)
+      if (!response.ok) throw new Error("Failed to fetch products")
+
+      const { products } = await response.json()
+
+      // Calculate discounted price per product
+      const discountedPricePerProduct = Math.round(bundle.bundle_price / products.length)
+
+      // Get bundle image or use default
+      const bundleImage = bundle.bundle_image || DEFAULT_BUNDLE_IMAGES[Math.floor(Math.random() * DEFAULT_BUNDLE_IMAGES.length)]
+
+      // Add each product to cart with bundle price
+      products.forEach((product: any) => {
+        addItem({
+          product_id: product.id,
+          name: product.name,
+          price: discountedPricePerProduct,
+          image: bundleImage,
+          quantity: 1,
+        })
+      })
+
+      // Show success toast
+      setTimeout(() => {
+        toast.success(
+          `${bundle.name} added to cart! 🎉`,
+          {
+            description: `${products.length} items • Save KES ${bundle.savings.toLocaleString()}`,
+            action: {
+              label: "View Cart",
+              onClick: () => window.location.href = "/cart"
+            }
+          }
+        )
+      }, 100)
+    } catch (error) {
+      console.error("Error adding bundle to cart:", error)
+      toast.error("Failed to add bundle to cart")
+    }
   }
+
+  // Get bundle image or use default
+  const bundleImage = bundle.bundle_image || DEFAULT_BUNDLE_IMAGES[0]
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20 rounded-2xl p-4 relative overflow-hidden"
+      className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
     >
-      {/* Savings badge */}
-      <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-        <Sparkles className="w-3 h-3" />
-        Save KES {bundle.savings.toLocaleString()}
+      {/* Bundle Image */}
+      <div className="relative w-full h-48 bg-gradient-to-br from-rose-50 to-pink-50">
+        <Image
+          src={bundleImage}
+          alt={bundle.name}
+          fill
+          className="object-cover"
+        />
+        {/* Savings badge */}
+        <div className="absolute top-3 right-3 bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+          <Sparkles className="w-3 h-3" />
+          Save KES {bundle.savings.toLocaleString()}
+        </div>
       </div>
 
-      {/* Product images */}
-      <div className="flex -space-x-4 mb-4">
-        {bundle.products?.slice(0, 3).map((product, i) => (
-          <div
-            key={product.id}
-            className="w-16 h-16 rounded-full border-2 border-background overflow-hidden bg-muted relative"
-            style={{ zIndex: 3 - i }}
-          >
-            <Image src={product.images?.[0] || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
-          </div>
-        ))}
-        {bundle.products && bundle.products.length > 3 && (
-          <div className="w-16 h-16 rounded-full border-2 border-background bg-muted flex items-center justify-center text-sm font-medium">
-            +{bundle.products.length - 3}
-          </div>
-        )}
+      {/* Content */}
+      <div className="p-4">
+        <h3 className="font-semibold text-lg mb-1">{bundle.name}</h3>
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{bundle.description}</p>
+
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl font-bold text-rose-500">KES {bundle.bundle_price.toLocaleString()}</span>
+          <span className="text-sm line-through text-muted-foreground">KES {bundle.original_price.toLocaleString()}</span>
+        </div>
+
+        <Button onClick={handleAddBundle} className="w-full bg-rose-500 hover:bg-rose-600" size="sm">
+          Add Bundle to Cart
+        </Button>
       </div>
-
-      <h3 className="font-semibold mb-1">{bundle.name}</h3>
-      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{bundle.description}</p>
-
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg font-bold text-primary">KES {bundle.bundle_price.toLocaleString()}</span>
-        <span className="text-sm line-through text-muted-foreground">KES {bundle.original_price.toLocaleString()}</span>
-      </div>
-
-      <Button onClick={handleAddBundle} className="w-full" size="sm">
-        Add Bundle to Cart
-      </Button>
     </motion.div>
   )
 }

@@ -39,7 +39,7 @@ export function TestimonialsCarousel({ testimonials }: { testimonials: Testimoni
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}
           transition={{ duration: 0.3 }}
-          className="bg-muted rounded-2xl p-4 max-w-sm mx-auto"
+          className="bg-muted/50 backdrop-blur-sm border border-border/50 rounded-3xl p-6 md:p-8 max-w-2xl mx-auto shadow-sm"
         >
           {/* DM Style */}
           <div className="flex items-start gap-3">

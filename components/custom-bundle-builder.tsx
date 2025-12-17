@@ -1,0 +1,291 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import Image from "next/image"
+import { Check, Package, AlertCircle, Search, ChevronDown, ChevronUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Input } from "@/components/ui/input"
+import { useCart } from "@/lib/cart-context"
+import { toast } from "sonner"
+
+interface Product {
+    id: number
+    name: string
+    price: number
+    images: string[]
+    category: string
+    stock_quantity: number
+}
+
+interface CustomBundleBuilderProps {
+    products: Product[]
+}
+
+const DEFAULT_BUNDLE_IMAGES = [
+    "/cute summer fridays lip gloss key chain charm….jpg",
+    "/i love the new charms.jpg",
+    "/Keep your lippie with you wherever you go by….jpg",
+    "/my pic.jpg", // Fixed: removed emoji from filename
+]
+
+export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
+    const [selectedProducts, setSelectedProducts] = useState<number[]>([])
+    const [searchQuery, setSearchQuery] = useState("")
+    const [categoryFilter, setCategoryFilter] = useState<string>("all")
+    const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false)
+    const { addItem } = useCart()
+
+    // Filter products based on search and category
+    const filteredProducts = useMemo(() => {
+        return products.filter(product => {
+            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
+            const matchesCategory = categoryFilter === "all" || product.category === categoryFilter
+            return matchesSearch && matchesCategory
+        })
+    }, [products, searchQuery, categoryFilter])
+
+    // Calculate totals
+    const selectedItems = products.filter(p => selectedProducts.includes(p.id))
+    const originalTotal = selectedItems.reduce((sum, p) => sum + Number(p.price || 0), 0)
+
+    // Discount tiers based on quantity
+    const getDiscountPercent = (count: number) => {
+        if (count >= 4) return 20
+        if (count === 3) return 15
+        if (count === 2) return 10
+        return 0
+    }
+
+    const discountPercent = getDiscountPercent(selectedProducts.length)
+    const discountAmount = Math.round(originalTotal * (discountPercent / 100))
+    const finalPrice = originalTotal - discountAmount
+
+    // Category validation
+    const categories = selectedItems.map(p => p.category)
+    const hasHairClip = categories.includes("hair-clip")
+    const hasGloss = categories.includes("gloss")
+    const isMixedCategory = hasHairClip && hasGloss
+    const isSameCategory = categories.length > 0 && new Set(categories).size === 1
+
+    const isValidBundle = selectedProducts.length >= 2 && (isMixedCategory || isSameCategory)
+
+    const toggleProduct = (productId: number) => {
+        setSelectedProducts(prev =>
+            prev.includes(productId)
+                ? prev.filter(id => id !== productId)
+                : [...prev, productId]
+        )
+    }
+
+    const handleAddToCart = () => {
+        if (!isValidBundle) return
+
+        // Select random default image for bundle
+        const randomImage = DEFAULT_BUNDLE_IMAGES[Math.floor(Math.random() * DEFAULT_BUNDLE_IMAGES.length)]
+
+        // Calculate discounted price per item
+        const discountMultiplier = 1 - (discountPercent / 100)
+        const discountedPricePerItem = finalPrice / selectedItems.length
+
+        // Add each product individually with bundle discount applied
+        selectedItems.forEach(product => {
+            addItem({
+                product_id: product.id,
+                name: product.name,
+                price: Math.round(product.price * discountMultiplier), // Apply discount to price
+                image: randomImage, // Use random default bundle image
+                quantity: 1,
+            })
+        })
+
+        // Clear selection first
+        setSelectedProducts([])
+
+        // Show success toast with bundle details after a brief delay
+        setTimeout(() => {
+            toast.success(
+                `Bundle added to cart! 🎉`,
+                {
+                    description: `${selectedItems.length} items • Save KES ${discountAmount.toLocaleString()} (${discountPercent}% off)`,
+                    action: {
+                        label: "View Cart",
+                        onClick: () => window.location.href = "/cart"
+                    }
+                }
+            )
+        }, 100)
+    }
+
+    return (
+        <div className="bg-card border border-border rounded-xl p-6 space-y-6">
+            {/* Instructions - Collapsible on Mobile */}
+            <div className="border border-border rounded-lg overflow-hidden">
+                <button
+                    onClick={() => setIsHowItWorksOpen(!isHowItWorksOpen)}
+                    className="w-full flex items-center justify-between p-4 bg-muted/30 md:cursor-default"
+                >
+                    <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        <strong>How it works:</strong>
+                    </div>
+                    <div className="md:hidden">
+                        {isHowItWorksOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </div>
+                </button>
+                <div className={`${isHowItWorksOpen ? 'block' : 'hidden'} md:block p-4 pt-2`}>
+                    <p className="text-sm mb-2">Select 2+ products to create your bundle.</p>
+                    <ul className="space-y-1 text-sm">
+                        <li>• 2 items = 10% off</li>
+                        <li>• 3 items = 15% off</li>
+                        <li>• 4+ items = 20% off</li>
+                        <li>• Mix categories (Hair Clip + Lip Gloss) or stick to one!</li>
+                    </ul>
+                </div>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="space-y-3">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                    <Button
+                        variant={categoryFilter === "all" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCategoryFilter("all")}
+                    >
+                        All Products
+                    </Button>
+                    <Button
+                        variant={categoryFilter === "hair-clip" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCategoryFilter("hair-clip")}
+                    >
+                        Hair Clips
+                    </Button>
+                    <Button
+                        variant={categoryFilter === "gloss" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCategoryFilter("gloss")}
+                    >
+                        Lip Gloss
+                    </Button>
+                </div>
+            </div>
+
+            {/* Product Selection Grid */}
+            <div>
+                <h3 className="font-semibold mb-4">Select Products ({selectedProducts.length} selected)</h3>
+                {filteredProducts.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>No products found matching your search.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                        {filteredProducts.map((product) => {
+                            const isSelected = selectedProducts.includes(product.id)
+                            return (
+                                <button
+                                    key={product.id}
+                                    type="button"
+                                    onClick={() => toggleProduct(product.id)}
+                                    className={`relative p-3 rounded-lg border-2 text-left transition-all ${isSelected
+                                        ? "border-primary bg-primary/10 shadow-md"
+                                        : "border-border hover:border-primary/50"
+                                        }`}
+                                >
+                                    {/* Checkmark */}
+                                    {isSelected && (
+                                        <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                            <Check className="w-4 h-4 text-white" />
+                                        </div>
+                                    )}
+
+                                    {/* Product Image */}
+                                    <div className="relative h-24 mb-2 bg-muted rounded-md overflow-hidden">
+                                        <Image
+                                            src={product.images[0] || "/placeholder.svg"}
+                                            alt={product.name}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+
+                                    {/* Product Info */}
+                                    <p className="text-sm font-medium line-clamp-2 mb-1">{product.name}</p>
+                                    <p className="text-xs text-muted-foreground">KES {product.price.toLocaleString()}</p>
+                                    <p className="text-xs text-muted-foreground capitalize">{product.category.replace("-", " ")}</p>
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* Bundle Summary */}
+            {selectedProducts.length > 0 && (
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <h4 className="font-semibold">Bundle Summary</h4>
+
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Original Total:</span>
+                            <span className="line-through">KES {originalTotal.toLocaleString()}</span>
+                        </div>
+
+                        {discountPercent > 0 && (
+                            <>
+                                <div className="flex justify-between text-green-600 font-medium">
+                                    <span>Discount ({discountPercent}%):</span>
+                                    <span>- KES {discountAmount.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t">
+                                    <span>Final Price:</span>
+                                    <span>KES {finalPrice.toLocaleString()}</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Validation Messages */}
+                    {selectedProducts.length === 1 && (
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>Select at least 2 products to create a bundle.</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {selectedProducts.length >= 2 && !isMixedCategory && !isSameCategory && (
+                        <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                                Mix categories (Hair Clip + Lip Gloss) or select products from the same category.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* Add to Cart Button */}
+                    <Button
+                        onClick={handleAddToCart}
+                        disabled={!isValidBundle}
+                        className="w-full"
+                        size="lg"
+                    >
+                        {isValidBundle
+                            ? `Add Bundle to Cart (Save KES ${discountAmount.toLocaleString()})`
+                            : "Select Products to Continue"}
+                    </Button>
+                </div>
+            )}
+        </div>
+    )
+}

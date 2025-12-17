@@ -11,10 +11,10 @@ export default async function AdminTestimonialsPage() {
     redirect("/admin/login")
   }
 
-  const testimonials = await sql<Testimonial[]>`
+  const testimonials = await sql`
     SELECT * FROM testimonials 
     ORDER BY created_at DESC
-  `
+  ` as unknown as Testimonial[]
 
   return (
     <div className="p-6 md:p-8">

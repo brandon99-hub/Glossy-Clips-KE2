@@ -5,6 +5,9 @@ import { ProductCard } from "@/components/product-card"
 import { TestimonialsCarousel } from "@/components/testimonials-carousel"
 import { BundlesSection } from "@/components/bundles-section"
 
+import { DesktopHero } from "@/components/desktop-hero"
+import { DesktopCategoryGrid } from "@/components/desktop-category-grid"
+
 const fallbackProducts: Product[] = [
   {
     id: 1,
@@ -118,40 +121,70 @@ const fallbackTestimonials: Testimonial[] = [
 
 export default async function HomePage() {
   let products: Product[] = fallbackProducts
-  let testimonials: Testimonial[] = fallbackTestimonials
+  let testimonials: Testimonial[] = []
+  let bundles: Array<{
+    id: number
+    name: string
+    description: string
+    bundle_price: number
+    original_price: number
+    savings: number
+    bundle_image?: string
+  }> = []
 
   try {
-    const dbProducts = await sql<Product[]>`
+    const dbProducts = await sql`
       SELECT * FROM products 
       WHERE is_active = true AND is_secret = false 
       ORDER BY created_at DESC 
       LIMIT 6
-    `
+    ` as unknown as Product[]
+
     if (dbProducts.length > 0) {
       products = dbProducts
     }
 
-    const dbTestimonials = await sql<Testimonial[]>`
+    const dbTestimonials = await sql`
       SELECT * FROM testimonials 
       WHERE is_active = true 
       ORDER BY created_at DESC
-    `
+    ` as unknown as Testimonial[]
+
     if (dbTestimonials.length > 0) {
       testimonials = dbTestimonials
     }
+
+    // Fetch active bundles for desktop hero
+    const dbBundles = await sql`
+      SELECT id, name, description, bundle_price, original_price, savings, bundle_image, product_ids
+      FROM bundles 
+      WHERE is_active = true 
+      ORDER BY created_at DESC
+      LIMIT 5
+    `
+    bundles = dbBundles as typeof bundles
   } catch {
-    // Database not set up yet, use fallback data
-    console.log("Using fallback data - run SQL scripts to set up database")
+    // Database check failed, using fallback products only
+    console.log("Database connection failed or empty")
   }
 
   return (
     <div>
-      <HeroSection />
-      <CategoryGrid />
-      <BundlesSection />
+      <div className="md:hidden">
+        <HeroSection />
+        <CategoryGrid />
+      </div>
 
-      {/* Featured Products */}
-      <section className="py-12 px-4">
+      <div className="hidden md:block">
+        <DesktopHero bundles={bundles} />
+        <DesktopCategoryGrid />
+      </div>
+      <div className="md:hidden">
+        <BundlesSection />
+      </div>
+
+      {/* Featured Products - Mobile */}
+      <section className="py-12 px-4 md:hidden">
         <div className="container mx-auto">
           <h2 className="text-2xl font-bold text-center mb-2">New Arrivals</h2>
           <p className="text-muted-foreground text-center mb-8">Fresh drops you need in your life</p>
@@ -163,14 +196,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-12 px-4 bg-muted/50">
+      {/* Featured Products - Desktop */}
+      <section className="hidden md:block py-20 px-8">
         <div className="container mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-2">The Love</h2>
-          <p className="text-muted-foreground text-center mb-4">What our girlies are saying</p>
-          <TestimonialsCarousel testimonials={testimonials} />
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">New Arrivals</h2>
+            <p className="text-lg text-muted-foreground">Fresh drops you need in your life</p>
+          </div>
+          <div className="grid grid-cols-4 gap-8 max-w-7xl mx-auto">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* Testimonials */}
+      {testimonials.length > 0 && (
+        <section className="py-12 px-4 bg-muted/30">
+          <div className="container mx-auto">
+            <h2 className="text-2xl font-bold text-center mb-2">The Love</h2>
+            <p className="text-muted-foreground text-center mb-4">What our girlies are saying</p>
+            <TestimonialsCarousel testimonials={testimonials} />
+          </div>
+        </section>
+      )}
 
       {/* Gift Card Teaser */}
       <section className="py-12 px-4">

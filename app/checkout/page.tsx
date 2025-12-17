@@ -263,7 +263,11 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
                     <SelectContent>
                       {locations.map((loc) => (
                         <SelectItem key={loc.id} value={loc.id.toString()}>
-                          {loc.name} - {loc.area} (KES {loc.delivery_fee})
+                          <div className="flex items-center w-full max-w-[280px] md:max-w-md">
+                            <span className="truncate">
+                              {loc.name} - {loc.area} (KES {loc.delivery_fee})
+                            </span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -283,8 +287,8 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
             </CardHeader>
             <CardContent>
               <div className="space-y-2 mb-3">
-                {items.map((item) => (
-                  <div key={item.product_id} className="flex justify-between text-sm">
+                {items.map((item, index) => (
+                  <div key={`${item.product_id}-${index}`} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">
                       {item.name} x{item.quantity}
                     </span>

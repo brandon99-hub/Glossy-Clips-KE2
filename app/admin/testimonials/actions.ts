@@ -9,9 +9,21 @@ export async function addTestimonial(formData: FormData) {
   const emoji_reactions = formData.get("emoji_reactions") as string
 
   try {
+    // Randomly select a default image if none provided
+    let imageToUse = profile_image
+    if (!imageToUse) {
+      const defaultImages = [
+        "/african-woman-avatar.jpg",
+        "/young-woman-avatar.png",
+        "/smiling-woman-avatar.png",
+        "/pfp.jpg"
+      ]
+      imageToUse = defaultImages[Math.floor(Math.random() * defaultImages.length)]
+    }
+
     await sql`
       INSERT INTO testimonials (username, profile_image, message, emoji_reactions)
-      VALUES (${username.replace("@", "")}, ${profile_image || "/placeholder.svg?height=60&width=60"}, ${message}, ${emoji_reactions})
+      VALUES (${username.replace("@", "")}, ${imageToUse}, ${message}, ${emoji_reactions})
     `
     return { success: true }
   } catch (error) {
