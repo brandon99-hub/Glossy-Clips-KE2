@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     "Premium hair clips and lip gloss for the glow-up generation. Shop now and get a free gift card with every order! Based in Kenya 🇰🇪",
   generator: 'v0.app',
   icons: {
-    icon: '/logo.jpeg',
-    shortcut: '/logo.jpeg',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
     apple: '/logo.jpeg',
   },
 }
