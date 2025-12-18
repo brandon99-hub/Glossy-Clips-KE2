@@ -1,7 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { motion, useMotionValue, useTransform, animate } from "framer-motion"
 
 interface SwipeNavigationProps {
     children: React.ReactNode
@@ -10,47 +11,122 @@ interface SwipeNavigationProps {
 
 export function SwipeNavigation({ children, currentPage }: SwipeNavigationProps) {
     const router = useRouter()
+    const [isDragging, setIsDragging] = useState(false)
+    const x = useMotionValue(0)
+
+    const touchStartX = useRef(0)
+    const touchStartY = useRef(0)
+    const touchCurrentX = useRef(0)
+    const touchCurrentY = useRef(0)
+    const isHorizontalSwipe = useRef(false)
 
     useEffect(() => {
-        let touchStartX = 0
-        let touchEndX = 0
-
-        const minSwipeDistance = 50 // Minimum distance for swipe to trigger
+        // Only on mobile
+        if (typeof window === "undefined" || window.innerWidth >= 768) return
 
         const handleTouchStart = (e: TouchEvent) => {
-            touchStartX = e.changedTouches[0].screenX
+            touchStartX.current = e.touches[0].clientX
+            touchStartY.current = e.touches[0].clientY
+            isHorizontalSwipe.current = false
         }
 
-        const handleTouchEnd = (e: TouchEvent) => {
-            touchEndX = e.changedTouches[0].screenX
-            handleSwipe()
-        }
+        const handleTouchMove = (e: TouchEvent) => {
+            touchCurrentX.current = e.touches[0].clientX
+            touchCurrentY.current = e.touches[0].clientY
 
-        const handleSwipe = () => {
-            const swipeDistance = touchEndX - touchStartX
+            const deltaX = Math.abs(touchCurrentX.current - touchStartX.current)
+            const deltaY = Math.abs(touchCurrentY.current - touchStartY.current)
 
-            // Swipe left (right to left) - go to shop
-            if (swipeDistance < -minSwipeDistance && currentPage === "home") {
-                router.push("/shop")
+            // Determine if this is a horizontal swipe
+            if (deltaX > 10 && deltaX > deltaY && !isHorizontalSwipe.current) {
+                isHorizontalSwipe.current = true
             }
 
-            // Swipe right (left to right) - go to home
-            if (swipeDistance > minSwipeDistance && currentPage === "shop") {
-                router.push("/")
+            // If horizontal swipe detected, update position and prevent scroll
+            if (isHorizontalSwipe.current) {
+                e.preventDefault() // Prevent vertical scroll
+                setIsDragging(true)
+
+                const diff = touchCurrentX.current - touchStartX.current
+
+                // Constrain drag based on current page
+                if (currentPage === "home" && diff > 0) {
+                    // Can't swipe right from home
+                    x.set(0)
+                } else if (currentPage === "shop" && diff < 0) {
+                    // Can't swipe left from shop
+                    x.set(0)
+                } else {
+                    x.set(diff)
+                }
             }
         }
 
-        // Only add listeners on mobile
-        if (typeof window !== "undefined" && window.innerWidth < 768) {
-            document.addEventListener("touchstart", handleTouchStart)
-            document.addEventListener("touchend", handleTouchEnd)
+        const handleTouchEnd = () => {
+            if (!isHorizontalSwipe.current) {
+                setIsDragging(false)
+                return
+            }
+
+            const swipeDistance = touchCurrentX.current - touchStartX.current
+            const threshold = window.innerWidth * 0.4 // 40% threshold
+
+            // Swipe left from home (go to shop)
+            if (swipeDistance < -threshold && currentPage === "home") {
+                // Animate to completion
+                animate(x, -window.innerWidth, {
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1],
+                    onComplete: () => {
+                        router.push("/shop")
+                    }
+                })
+            }
+            // Swipe right from shop (go to home)
+            else if (swipeDistance > threshold && currentPage === "shop") {
+                // Animate to completion
+                animate(x, window.innerWidth, {
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1],
+                    onComplete: () => {
+                        router.push("/")
+                    }
+                })
+            }
+            // Snap back
+            else {
+                animate(x, 0, {
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1]
+                })
+            }
+
+            setIsDragging(false)
+            isHorizontalSwipe.current = false
         }
+
+        document.addEventListener("touchstart", handleTouchStart, { passive: true })
+        document.addEventListener("touchmove", handleTouchMove, { passive: false })
+        document.addEventListener("touchend", handleTouchEnd)
 
         return () => {
             document.removeEventListener("touchstart", handleTouchStart)
+            document.removeEventListener("touchmove", handleTouchMove)
             document.removeEventListener("touchend", handleTouchEnd)
         }
-    }, [currentPage, router])
+    }, [currentPage, router, x])
 
-    return <>{children}</>
+    // Only apply transform on mobile
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+        return <>{children}</>
+    }
+
+    return (
+        <motion.div
+            style={{ x }}
+            className="touch-pan-y"
+        >
+            {children}
+        </motion.div>
+    )
 }
