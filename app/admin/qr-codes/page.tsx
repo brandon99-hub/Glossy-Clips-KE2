@@ -22,7 +22,13 @@ export default async function AdminQRCodesPage() {
   // Generate QR codes
   const codesWithQr = await Promise.all(
     secretCodes.map(async (sc) => {
-      const secretUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/secret/${sc.code}`
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ""
+      const secretUrl = `${baseUrl}/secret/${sc.code}`
+
+      if (!baseUrl) {
+        console.warn(`[WARNING] NEXT_PUBLIC_APP_URL is not set. QR code for ${sc.code} will be relative and might not work on mobile devices.`)
+      }
+
       try {
         const qrCodeData = await QRCode.toDataURL(secretUrl)
         return { ...sc, secretUrl, qrCodeData }
