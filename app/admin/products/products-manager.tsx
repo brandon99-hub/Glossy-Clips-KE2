@@ -13,12 +13,27 @@ import { createProduct, updateProduct, deleteProduct, toggleProductStatus } from
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+const DEFAULT_PRODUCT_IMAGES = [
+    "/gold-hair-claw-clip.jpg",
+    "/summer-fridays-vanilla-lip-gloss-pink-tube.jpg",
+    "/charms.jpg",
+    "/my pic.jpg",
+    "/cute summer fridays lip gloss key chain charm….jpg",
+    "/i love the new charms.jpg",
+    "/Keep your lippie with you wherever you go by….jpg",
+    "/pearl-hair-pins-set.jpg",
+    "/colorful-butterfly-hair-clips.jpg",
+    "/summer-fridays-cherry-lip-gloss.jpg",
+    "/satin-scrunchies-pink-brown-beige.jpg",
+]
+
 export function ProductsManager({ products: initialProducts, categories }: { products: Product[]; categories: Category[] }) {
     const [products, setProducts] = useState(initialProducts)
     const [showForm, setShowForm] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [loading, setLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const [selectedDefaultImage, setSelectedDefaultImage] = useState("")
 
     // Form State
     const [formData, setFormData] = useState({
@@ -41,6 +56,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
             images: [],
             is_active: true
         })
+        setSelectedDefaultImage("")
         setEditingProduct(null)
     }
 
@@ -55,6 +71,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
             images: product.images,
             is_active: product.is_active
         })
+        setSelectedDefaultImage("")
         setShowForm(true)
     }
 
@@ -240,28 +257,52 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                             <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
                                 <h3 className="font-semibold flex items-center gap-2"><FileImage className="w-4 h-4" /> Media</h3>
 
-                                <div className="grid grid-cols-3 gap-2">
-                                    {formData.images.map((img, idx) => (
-                                        <div key={idx} className="relative aspect-square rounded-md overflow-hidden border">
-                                            <Image src={img} alt="Product" fill className="object-cover" />
+                                {/* Default Image Selection */}
+                                <div>
+                                    <p className="text-sm text-muted-foreground mb-2">Choose from default images:</p>
+                                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                                        {DEFAULT_PRODUCT_IMAGES.map((img) => (
                                             <button
+                                                key={img}
                                                 type="button"
-                                                onClick={() => removeImage(idx)}
-                                                className="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white p-1 rounded-full transition-colors"
+                                                onClick={() => {
+                                                    setSelectedDefaultImage(img)
+                                                    setFormData({ ...formData, images: [...formData.images, img] })
+                                                }}
+                                                className="relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:border-primary/50"
                                             >
-                                                <X className="w-3 h-3" />
+                                                <Image src={img} alt="Default product" fill className="object-cover" />
                                             </button>
-                                        </div>
-                                    ))}
-                                    <label className="flex flex-col items-center justify-center aspect-square rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer">
-                                        <div className="text-center p-2">
-                                            {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : <Plus className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />}
-                                            <span className="text-xs text-muted-foreground">Add Image</span>
-                                        </div>
-                                        <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={loading} />
-                                    </label>
+                                        ))}
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground">First image will be the cover.</p>
+
+                                {/* Current Images */}
+                                <div>
+                                    <p className="text-sm font-medium mb-2">Selected images:</p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {formData.images.map((img, idx) => (
+                                            <div key={idx} className="relative aspect-square rounded-md overflow-hidden border">
+                                                <Image src={img} alt="Product" fill className="object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeImage(idx)}
+                                                    className="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white p-1 rounded-full transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <label className="flex flex-col items-center justify-center aspect-square rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <div className="text-center p-2">
+                                                {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : <Plus className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />}
+                                                <span className="text-xs text-muted-foreground">Upload</span>
+                                            </div>
+                                            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={loading} />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-2">First image will be the cover.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
