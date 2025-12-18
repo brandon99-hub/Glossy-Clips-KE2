@@ -27,6 +27,7 @@ export const orderSchema = z.object({
         )
         .min(1, "Cart cannot be empty"),
     totalAmount: z.number().positive("Total amount must be positive"),
+    secretCode: z.string().optional(),
 })
 
 // Product review validation schema

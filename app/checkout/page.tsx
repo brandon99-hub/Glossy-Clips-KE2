@@ -114,6 +114,7 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
           quantity: Number(item.quantity),
         })),
         totalAmount: Number(finalTotal),
+        secretCode: typeof window !== 'undefined' ? localStorage.getItem('active_secret_code') || undefined : undefined,
       })
 
       if (result.success && result.referenceCode) {
@@ -127,6 +128,11 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
           deliveryMethod: deliveryMethod,
           pickupLocation: deliveryMethod === "self-pickup" ? formData.location : selectedLocation?.name || "",
         })
+
+        // Clear secret code from localStorage after successful order
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('active_secret_code')
+        }
 
         clearCart()
         router.push(`/success/${result.referenceCode}`)

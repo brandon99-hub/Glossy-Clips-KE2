@@ -12,6 +12,7 @@ const productSchema = z.object({
     category: z.string().min(1, "Category is required"),
     images: z.string().transform((val) => val.split(",").filter((url) => url.trim() !== "")),
     is_active: z.coerce.boolean().default(true),
+    is_secret: z.coerce.boolean().default(false),
 })
 
 export async function createProduct(formData: FormData) {
@@ -24,6 +25,7 @@ export async function createProduct(formData: FormData) {
             category: formData.get("category"),
             images: formData.get("images"),
             is_active: formData.get("is_active") === "on",
+            is_secret: formData.get("is_secret") === "on",
         }
 
         const validatedData = productSchema.parse(rawData)
@@ -37,7 +39,7 @@ export async function createProduct(formData: FormData) {
         await sql`
       INSERT INTO products (
         name, slug, description, price, stock_quantity, 
-        category, images, is_active, created_at
+        category, images, is_active, is_secret, created_at
       )
       VALUES (
         ${validatedData.name}, 
@@ -48,6 +50,7 @@ export async function createProduct(formData: FormData) {
         ${validatedData.category}, 
         ${imagesArray}, 
         ${validatedData.is_active}, 
+        ${validatedData.is_secret}, 
         NOW()
       )
     `
@@ -71,6 +74,7 @@ export async function updateProduct(formData: FormData) {
             category: formData.get("category"),
             images: formData.get("images"),
             is_active: formData.get("is_active") === "on",
+            is_secret: formData.get("is_secret") === "on",
         }
 
         const validatedData = productSchema.parse(rawData)
@@ -85,7 +89,8 @@ export async function updateProduct(formData: FormData) {
           stock_quantity = ${validatedData.stock_quantity}, 
           category = ${validatedData.category}, 
           images = ${imagesArray}, 
-          is_active = ${validatedData.is_active}
+          is_active = ${validatedData.is_active},
+          is_secret = ${validatedData.is_secret}
         WHERE id = ${Number(id)}
       `
 

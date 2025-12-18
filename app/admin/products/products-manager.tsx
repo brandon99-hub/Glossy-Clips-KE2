@@ -43,7 +43,8 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
         stock_quantity: "",
         category: "",
         images: [] as string[],
-        is_active: true
+        is_active: true,
+        is_secret: false
     })
 
     const resetForm = () => {
@@ -54,7 +55,8 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
             stock_quantity: "",
             category: "",
             images: [],
-            is_active: true
+            is_active: true,
+            is_secret: false
         })
         setSelectedDefaultImage("")
         setEditingProduct(null)
@@ -69,7 +71,8 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
             stock_quantity: (product.stock_quantity || 0).toString(),
             category: product.category,
             images: product.images,
-            is_active: product.is_active
+            is_active: product.is_active,
+            is_secret: product.is_secret || false
         })
         setSelectedDefaultImage("")
         setShowForm(true)
@@ -122,6 +125,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
         form.append("category", formData.category)
         form.append("images", formData.images.join(",")) // Send as comma-separated string, handled in action
         if (formData.is_active) form.append("is_active", "on")
+        if (formData.is_secret) form.append("is_secret", "on")
 
         let result
         if (editingProduct) {
@@ -233,6 +237,17 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground">Inactive products are hidden from the store.</p>
+                            </div>
+
+                            <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-base">🔒 Secret Product</Label>
+                                    <Switch
+                                        checked={formData.is_secret}
+                                        onCheckedChange={c => setFormData({ ...formData, is_secret: c })}
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground">Secret products are only visible via QR code and get automatic discount.</p>
                             </div>
 
                             <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
@@ -355,6 +370,13 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                             {!product.is_active && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
                                     <span className="bg-black/70 text-white text-xs px-2 py-1 rounded">Inactive</span>
+                                </div>
+                            )}
+                            {product.is_secret && (
+                                <div className="absolute top-2 right-2">
+                                    <span className="bg-rose-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                        🔒 SECRET
+                                    </span>
                                 </div>
                             )}
                         </div>

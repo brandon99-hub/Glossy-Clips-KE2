@@ -40,7 +40,7 @@ export async function createOrder(data: OrderInput) {
     }
 
     // Create the order
-    await sql`
+    const orderResult = await sql`
       INSERT INTO orders (
         reference_code, 
         customer_name, 
@@ -64,7 +64,10 @@ export async function createOrder(data: OrderInput) {
         ${validated.pickupMtaaniLocationId ? validated.pickupLocation : null},
         'pending'
       )
+      RETURNING id
     `
+
+    const orderId = orderResult[0]?.id
 
     // Deduct inventory for each product
     for (const item of validated.items) {
@@ -73,6 +76,12 @@ export async function createOrder(data: OrderInput) {
         SET stock_quantity = stock_quantity - ${item.quantity}
         WHERE id = ${item.product_id}
       `
+    }
+
+    // Mark secret code as used if provided
+    if (validated.secretCode && orderId) {
+      const { markAsUsed } = await import("@/app/admin/qr-codes/actions")
+      await markAsUsed(validated.secretCode, orderId)
     }
 
     return { success: true, referenceCode }
