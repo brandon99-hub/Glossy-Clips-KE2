@@ -4,9 +4,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Instagram, Phone } from "lucide-react"
+import { useCategories } from "@/hooks/use-categories"
 
 export function Footer() {
     const pathname = usePathname()
+    const { categories } = useCategories()
 
     // Don't show footer on admin pages
     if (pathname?.startsWith("/admin")) {
@@ -35,12 +37,13 @@ export function Footer() {
                                 <li>
                                     <Link href="/shop" className="hover:text-primary transition-colors">All Products</Link>
                                 </li>
-                                <li>
-                                    <Link href="/shop?category=hair-clip" className="hover:text-primary transition-colors">Hair Clips</Link>
-                                </li>
-                                <li>
-                                    <Link href="/shop?category=gloss" className="hover:text-primary transition-colors">Lip Gloss</Link>
-                                </li>
+                                {categories.map(cat => (
+                                    <li key={cat.id}>
+                                        <Link href={`/shop?category=${cat.slug}`} className="hover:text-primary transition-colors">
+                                            {cat.name}
+                                        </Link>
+                                    </li>
+                                ))}
                                 <li>
                                     <Link href="/bundles" className="hover:text-primary transition-colors">Bundles</Link>
                                 </li>

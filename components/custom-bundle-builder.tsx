@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { useCart } from "@/lib/cart-context"
 import { toast } from "sonner"
+import { useCategories } from "@/hooks/use-categories"
 
 interface Product {
     id: number
@@ -35,6 +36,7 @@ export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
     const [categoryFilter, setCategoryFilter] = useState<string>("all")
     const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false)
     const { addItem } = useCart()
+    const { categories } = useCategories()
 
     // Filter products based on search and category
     const filteredProducts = useMemo(() => {
@@ -62,11 +64,11 @@ export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
     const finalPrice = originalTotal - discountAmount
 
     // Category validation
-    const categories = selectedItems.map(p => p.category)
-    const hasHairClip = categories.includes("hair-clip")
-    const hasGloss = categories.includes("gloss")
+    const categories_in_selection = selectedItems.map(p => p.category)
+    const hasHairClip = categories_in_selection.includes("hair-clip")
+    const hasGloss = categories_in_selection.includes("gloss")
     const isMixedCategory = hasHairClip && hasGloss
-    const isSameCategory = categories.length > 0 && new Set(categories).size === 1
+    const isSameCategory = categories_in_selection.length > 0 && new Set(categories_in_selection).size === 1
 
     const isValidBundle = selectedProducts.length >= 2 && (isMixedCategory || isSameCategory)
 
@@ -139,7 +141,7 @@ export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
                         <li>• 2 items = 10% off</li>
                         <li>• 3 items = 15% off</li>
                         <li>• 4+ items = 20% off</li>
-                        <li>• Mix categories (Hair Clip + Lip Gloss) or stick to one!</li>
+                        <li>• Mix categories or stick to one!</li>
                     </ul>
                 </div>
             </div>
@@ -165,20 +167,16 @@ export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
                     >
                         All Products
                     </Button>
-                    <Button
-                        variant={categoryFilter === "hair-clip" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCategoryFilter("hair-clip")}
-                    >
-                        Hair Clips
-                    </Button>
-                    <Button
-                        variant={categoryFilter === "gloss" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCategoryFilter("gloss")}
-                    >
-                        Lip Gloss
-                    </Button>
+                    {categories.map(cat => (
+                        <Button
+                            key={cat.id}
+                            variant={categoryFilter === cat.slug ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCategoryFilter(cat.slug)}
+                        >
+                            {cat.name}
+                        </Button>
+                    ))}
                 </div>
             </div>
 

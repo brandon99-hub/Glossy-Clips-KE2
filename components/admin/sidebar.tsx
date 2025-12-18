@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings } from "lucide-react"
+import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { adminLogout } from "@/app/admin/login/actions"
@@ -10,6 +10,7 @@ import { adminLogout } from "@/app/admin/login/actions"
 const navItems = [
   { href: "/admin/orders", icon: Package, label: "Orders" },
   { href: "/admin/products", icon: Tag, label: "Products" },
+  { href: "/admin/categories", icon: Layers, label: "Categories" },
   { href: "/admin/bundles", icon: PackageOpen, label: "Bundles" },
   { href: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
   { href: "/admin/qr-codes", icon: QrCode, label: "QR Codes" },

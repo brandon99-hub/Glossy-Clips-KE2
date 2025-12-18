@@ -131,3 +131,16 @@ export type PickupMtaaniLocation = {
   created_at: string
 }
 
+export type Category = {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  image: string | null
+  display_order: number
+  is_active: boolean
+  created_at: string
+}
+
+
+

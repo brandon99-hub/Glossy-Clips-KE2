@@ -1,5 +1,5 @@
 import type React from "react"
-import { sql, type Product } from "@/lib/db"
+import { sql, type Product, type Category } from "@/lib/db"
 import { ProductCard } from "@/components/product-card"
 
 const fallbackProducts: Product[] = [
@@ -11,7 +11,7 @@ const fallbackProducts: Product[] = [
     price: 450,
     category: "hair-clip",
     images: ["/gold-hair-claw-clip.jpg"],
-    stock: 10,
+    stock_quantity: 10,
     is_active: true,
     is_secret: false,
     created_at: new Date().toISOString(),
@@ -24,7 +24,7 @@ const fallbackProducts: Product[] = [
     price: 350,
     category: "hair-clip",
     images: ["/pearl-hair-pins-set.jpg"],
-    stock: 15,
+    stock_quantity: 15,
     is_active: true,
     is_secret: false,
     created_at: new Date().toISOString(),
@@ -37,7 +37,7 @@ const fallbackProducts: Product[] = [
     price: 1200,
     category: "gloss",
     images: ["/summer-fridays-vanilla-lip-gloss-pink-tube.jpg"],
-    stock: 8,
+    stock_quantity: 8,
     is_active: true,
     is_secret: false,
     created_at: new Date().toISOString(),
@@ -50,7 +50,7 @@ const fallbackProducts: Product[] = [
     price: 280,
     category: "hair-clip",
     images: ["/colorful-butterfly-hair-clips.jpg"],
-    stock: 20,
+    stock_quantity: 20,
     is_active: true,
     is_secret: false,
     created_at: new Date().toISOString(),
@@ -63,7 +63,7 @@ const fallbackProducts: Product[] = [
     price: 1200,
     category: "gloss",
     images: ["/summer-fridays-cherry-lip-gloss.jpg"],
-    stock: 12,
+    stock_quantity: 12,
     is_active: true,
     is_secret: false,
     created_at: new Date().toISOString(),
@@ -76,7 +76,7 @@ const fallbackProducts: Product[] = [
     price: 400,
     category: "hair-clip",
     images: ["/satin-scrunchies-pink-brown-beige.jpg"],
-    stock: 25,
+    stock_quantity: 25,
     is_active: true,
     is_secret: false,
     created_at: new Date().toISOString(),
@@ -84,6 +84,7 @@ const fallbackProducts: Product[] = [
 ]
 
 import { SearchInput } from "@/components/search-input"
+import { SwipeNavigation } from "@/components/swipe-navigation"
 
 export default async function ShopPage({
   searchParams,
@@ -93,6 +94,18 @@ export default async function ShopPage({
   const { category, search } = await searchParams
 
   let products: Product[] = fallbackProducts
+  let categories: Category[] = []
+
+  // Fetch categories
+  try {
+    categories = await sql`
+      SELECT * FROM categories 
+      WHERE is_active = true 
+      ORDER BY display_order ASC
+    ` as Category[]
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+  }
 
   try {
     if (search) {
@@ -128,51 +141,58 @@ export default async function ShopPage({
     }
   }
 
-  const title = search ? `Search: "${search}"` : (category === "hair-clip" ? "Hair Clips" : category === "gloss" ? "Lip Gloss" : "All Products")
+  // Get category name for title
+  const categoryName = categories.find(c => c.slug === category)?.name
+  const title = search ? `Search: "${search}"` : (categoryName || "All Products")
 
   return (
-    <div className="py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-1">{title}</h1>
-            <p className="text-muted-foreground">
-              {products.length} {products.length === 1 ? "product" : "products"}
-            </p>
+    <SwipeNavigation currentPage="shop">
+      <div className="py-8 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-1">{title}</h1>
+              <p className="text-muted-foreground">
+                {products.length} {products.length === 1 ? "product" : "products"}
+              </p>
+            </div>
+            <div className="w-full md:w-72">
+              <SearchInput />
+            </div>
           </div>
-          <div className="w-full md:w-72">
-            <SearchInput />
-          </div>
+
+          {/* Dynamic Filter Tabs */}
+          {!search && categories.length > 0 && (
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+              <FilterTab href="/shop" active={!category}>
+                All
+              </FilterTab>
+              {categories.map(cat => (
+                <FilterTab
+                  key={cat.id}
+                  href={`/shop?category=${cat.slug}`}
+                  active={category === cat.slug}
+                >
+                  {cat.name}
+                </FilterTab>
+              ))}
+            </div>
+          )}
+
+          {products.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No products found</p>
+            </div>
+          )}
         </div>
-
-        {/* Filter Tabs - Hide if searching to avoid confusion, or keep? Keeping is fine but reset search when clicked is handled by Link behavior usually, but here we might want to keep it simple */}
-        {!search && (
-          <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-            <FilterTab href="/shop" active={!category}>
-              All
-            </FilterTab>
-            <FilterTab href="/shop?category=hair-clip" active={category === "hair-clip"}>
-              Hair Clips
-            </FilterTab>
-            <FilterTab href="/shop?category=gloss" active={category === "gloss"}>
-              Lip Gloss
-            </FilterTab>
-          </div>
-        )}
-
-        {products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No products found</p>
-          </div>
-        )}
       </div>
-    </div>
+    </SwipeNavigation>
   )
 }
 

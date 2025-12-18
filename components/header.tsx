@@ -6,10 +6,12 @@ import { ShoppingBag, Settings } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState } from "react"
+import { useCategories } from "@/hooks/use-categories"
 
 export function Header() {
   const { totalItems } = useCart()
   const [isAdmin, setIsAdmin] = useState(false)
+  const { categories } = useCategories()
 
   useEffect(() => {
     // Check if admin session exists
@@ -34,12 +36,15 @@ export function Header() {
           <Link href="/shop" className="text-sm font-medium hover:text-primary transition-colors tracking-wide">
             Shop
           </Link>
-          <Link href="/shop?category=hair-clip" className="text-sm font-medium hover:text-primary transition-colors tracking-wide">
-            Hair Clips
-          </Link>
-          <Link href="/shop?category=gloss" className="text-sm font-medium hover:text-primary transition-colors tracking-wide">
-            Lip Gloss
-          </Link>
+          {categories.map(cat => (
+            <Link
+              key={cat.id}
+              href={`/shop?category=${cat.slug}`}
+              className="text-sm font-medium hover:text-primary transition-colors tracking-wide"
+            >
+              {cat.name}
+            </Link>
+          ))}
           <Link href="/bundles" className="text-sm font-medium hover:text-primary transition-colors tracking-wide">
             Bundles
           </Link>

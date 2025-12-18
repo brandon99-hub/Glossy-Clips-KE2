@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Plus, Search, Pencil, Trash2, Package, Tag, Layers, FileImage, Check, X, Loader2 } from "lucide-react"
-import type { Product } from "@/lib/db"
+import type { Product, Category } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +13,7 @@ import { createProduct, updateProduct, deleteProduct, toggleProductStatus } from
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export function ProductsManager({ products: initialProducts }: { products: Product[] }) {
+export function ProductsManager({ products: initialProducts, categories }: { products: Product[]; categories: Category[] }) {
     const [products, setProducts] = useState(initialProducts)
     const [showForm, setShowForm] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -228,8 +228,11 @@ export function ProductsManager({ products: initialProducts }: { products: Produ
                                         <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Hair Clip">Hair Clip</SelectItem>
-                                        <SelectItem value="Gloss">Gloss</SelectItem>
+                                        {categories.map(cat => (
+                                            <SelectItem key={cat.id} value={cat.slug}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>

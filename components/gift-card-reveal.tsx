@@ -208,11 +208,23 @@ function EnvelopeCard({ onReveal }: { onReveal: () => void }) {
     )
 }
 
-// Scratch card for mobile
+// Particle type for sparkle effects
+interface Particle {
+    id: number
+    x: number
+    y: number
+    color: string
+}
+
+// Scratch card for mobile - Enhanced with performance optimizations
 function ScratchCard({ onReveal }: { onReveal: () => void }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [scratchPercentage, setScratchPercentage] = useState(0)
     const [hasRevealed, setHasRevealed] = useState(false)
+    const [particles, setParticles] = useState<Particle[]>([])
+    const touchCountRef = useRef(0)
+    const rafIdRef = useRef<number | null>(null)
+    const particleIdRef = useRef(0)
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -221,58 +233,126 @@ function ScratchCard({ onReveal }: { onReveal: () => void }) {
         const ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        // Set canvas size
-        canvas.width = canvas.offsetWidth * 2
-        canvas.height = canvas.offsetHeight * 2
-        ctx.scale(2, 2)
+        // Use device pixel ratio for crisp rendering on all displays
+        const dpr = window.devicePixelRatio || 2
+        canvas.width = canvas.offsetWidth * dpr
+        canvas.height = canvas.offsetHeight * dpr
+        ctx.scale(dpr, dpr)
 
-        // Draw silver overlay
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+        // Enhanced metallic shimmer overlay
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0)
         gradient.addColorStop(0, "#C0C0C0")
-        gradient.addColorStop(0.5, "#E8E8E8")
+        gradient.addColorStop(0.25, "#E8E8E8")
+        gradient.addColorStop(0.5, "#F5F5F5")
+        gradient.addColorStop(0.75, "#E8E8E8")
         gradient.addColorStop(1, "#C0C0C0")
         ctx.fillStyle = gradient
         ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        // Add subtle texture for realism
+        ctx.fillStyle = "rgba(0,0,0,0.03)"
+        for (let i = 0; i < 500; i++) {
+            ctx.fillRect(
+                Math.random() * canvas.width / dpr,
+                Math.random() * canvas.height / dpr,
+                1, 1
+            )
+        }
 
         // Add text
         ctx.font = "bold 24px Poppins"
         ctx.fillStyle = "#666"
         ctx.textAlign = "center"
-        ctx.fillText("✨ Scratch to reveal ✨", canvas.width / 4, canvas.height / 4)
+        ctx.fillText("✨ Scratch to reveal ✨", canvas.width / (dpr * 2), canvas.height / (dpr * 2))
     }, [])
 
     const handleScratch = (e: React.TouchEvent | React.MouseEvent) => {
+        if (hasRevealed) return
+
         const canvas = canvasRef.current
         if (!canvas) return
 
         const ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        const rect = canvas.getBoundingClientRect()
-        const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - rect.left
-        const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - rect.top
+        // Use requestAnimationFrame for smooth rendering
+        if (rafIdRef.current) return
 
-        // Erase circular area
-        ctx.globalCompositeOperation = "destination-out"
-        ctx.beginPath()
-        ctx.arc(x * 2, y * 2, 80, 0, Math.PI * 2)
-        ctx.fill()
+        rafIdRef.current = requestAnimationFrame(() => {
+            const rect = canvas.getBoundingClientRect()
+            const dpr = window.devicePixelRatio || 2
+            const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - rect.left
+            const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - rect.top
 
-        // Calculate scratch percentage
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        const pixels = imageData.data
-        let transparent = 0
-        for (let i = 3; i < pixels.length; i += 4) {
-            if (pixels[i] === 0) transparent++
-        }
-        const percentage = (transparent / (pixels.length / 4)) * 100
-        setScratchPercentage(percentage)
+            // Optimized brush size for mobile (55px)
+            ctx.globalCompositeOperation = "destination-out"
+            ctx.beginPath()
+            ctx.arc(x * dpr, y * dpr, 55 * dpr, 0, Math.PI * 2)
+            ctx.fill()
 
-        // Trigger reveal at 50%
-        if (percentage > 50 && !hasRevealed) {
-            setHasRevealed(true)
-            setTimeout(onReveal, 500)
-        }
+            // Haptic feedback on mobile
+            if ("vibrate" in navigator && "touches" in e) {
+                navigator.vibrate(5)
+            }
+
+            // Generate sparkle particles (every 3rd touch to avoid too many)
+            if (touchCountRef.current % 3 === 0) {
+                const particleColors = ["#E8E8E8", "#FFD700", "#FFFFFF", "#FFC0CB"]
+                const numParticles = Math.floor(Math.random() * 3) + 2 // 2-4 particles
+
+                const newParticles: Particle[] = []
+                for (let i = 0; i < numParticles; i++) {
+                    newParticles.push({
+                        id: particleIdRef.current++,
+                        x: x + (Math.random() - 0.5) * 30,
+                        y: y + (Math.random() - 0.5) * 30,
+                        color: particleColors[Math.floor(Math.random() * particleColors.length)]
+                    })
+                }
+
+                setParticles(prev => [...prev, ...newParticles])
+
+                // Clean up old particles after animation
+                setTimeout(() => {
+                    setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)))
+                }, 800)
+            }
+
+
+            // Throttle percentage calculation (every 8 touches for performance)
+            touchCountRef.current++
+            if (touchCountRef.current % 8 === 0) {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+                const pixels = imageData.data
+                let transparent = 0
+                for (let i = 3; i < pixels.length; i += 4) {
+                    if (pixels[i] === 0) transparent++
+                }
+                const percentage = (transparent / (pixels.length / 4)) * 100
+                setScratchPercentage(percentage)
+
+                // Trigger smooth reveal at 50%
+                if (percentage > 50 && !hasRevealed) {
+                    setHasRevealed(true)
+
+                    // Smooth fade-out animation
+                    let opacity = 1
+                    const fadeInterval = setInterval(() => {
+                        opacity -= 0.15
+                        ctx.globalAlpha = opacity
+                        ctx.globalCompositeOperation = "source-over"
+
+                        if (opacity <= 0) {
+                            clearInterval(fadeInterval)
+                            ctx.clearRect(0, 0, canvas.width, canvas.height)
+                            setTimeout(onReveal, 200)
+                        }
+                    }, 30)
+                }
+            }
+
+            rafIdRef.current = null
+        })
     }
 
     return (
@@ -296,9 +376,43 @@ function ScratchCard({ onReveal }: { onReveal: () => void }) {
                 <canvas
                     ref={canvasRef}
                     className="absolute inset-0 w-full h-full touch-none"
+                    onTouchStart={handleScratch}
                     onTouchMove={handleScratch}
+                    onMouseDown={handleScratch}
                     onMouseMove={(e) => e.buttons === 1 && handleScratch(e)}
                 />
+
+                {/* Sparkle particles */}
+                {particles.map(particle => (
+                    <motion.div
+                        key={particle.id}
+                        initial={{
+                            opacity: 1,
+                            scale: 1,
+                            x: particle.x,
+                            y: particle.y,
+                            rotate: 0
+                        }}
+                        animate={{
+                            opacity: 0,
+                            scale: 0.3,
+                            y: particle.y - 60,
+                            rotate: 360
+                        }}
+                        transition={{
+                            duration: 0.8,
+                            ease: "easeOut"
+                        }}
+                        className="absolute pointer-events-none"
+                        style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: particle.color,
+                            boxShadow: `0 0 8px ${particle.color}`,
+                        }}
+                    />
+                ))}
             </div>
         </motion.div>
     )
