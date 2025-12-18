@@ -116,6 +116,14 @@ export function SwipeNavigation({ children, currentPage }: SwipeNavigationProps)
         }
     }, [currentPage, router, x])
 
+    // Prefetch both pages for instant navigation
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.innerWidth < 768) {
+            router.prefetch("/")
+            router.prefetch("/shop")
+        }
+    }, [router])
+
     // Only apply transform on mobile
     if (typeof window !== "undefined" && window.innerWidth >= 768) {
         return <>{children}</>
