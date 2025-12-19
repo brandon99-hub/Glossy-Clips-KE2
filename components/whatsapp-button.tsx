@@ -3,56 +3,64 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageCircle, X } from "lucide-react"
-
 import { usePathname } from "next/navigation"
 
 const WHATSAPP_NUMBER = "254745717591"
 
 export function WhatsAppButton() {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const [showTooltip, setShowTooltip] = useState(false)
 
-  // Don't show in admin area
-  if (pathname?.startsWith("/admin")) return null
+  // Hide on testimonials page to avoid overlap with testimonial form button
+  if (pathname === "/testimonials") {
+    return null
+  }
 
   const handleClick = () => {
-    const message = encodeURIComponent("Hey! I have a question about your products on GLOSSYCLIPSKE")
+    const message = encodeURIComponent("Hi! I'm interested in your products.")
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank")
   }
 
   return (
-    <div className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-50">
+    <>
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={handleClick}
+        className="fixed bottom-24 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-colors"
+        aria-label="Chat on WhatsApp"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </motion.button>
+
       <AnimatePresence>
-        {showTooltip && (
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, x: 10, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 10, scale: 0.9 }}
-            className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-card border border-border rounded-xl p-3 shadow-lg whitespace-nowrap"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 right-6 z-50 bg-white rounded-2xl shadow-2xl p-4 max-w-xs"
           >
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-semibold text-sm">Chat with us!</p>
+              <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-gray-100 rounded-full">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">
+              Have questions? We're here to help!
+            </p>
             <button
-              onClick={() => setShowTooltip(false)}
-              className="absolute -top-2 -right-2 bg-muted rounded-full p-1"
+              onClick={handleClick}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
             >
-              <X className="w-3 h-3" />
+              Start Chat
             </button>
-            <p className="text-sm font-medium">Need help? Chat with us!</p>
-            <p className="text-xs text-muted-foreground">Usually replies within minutes</p>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <motion.button
-        onClick={handleClick}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="bg-[#25D366] hover:bg-[#20BD5A] text-white p-4 rounded-full shadow-lg flex items-center justify-center"
-        aria-label="Chat on WhatsApp"
-      >
-        <MessageCircle className="w-6 h-6" fill="white" />
-      </motion.button>
-    </div>
+    </>
   )
 }

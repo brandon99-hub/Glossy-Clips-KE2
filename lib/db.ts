@@ -35,6 +35,8 @@ export type Order = {
   delivery_method?: "pickup" | "pickup_mtaani"
   delivery_fee?: number
   pickup_mtaani_location?: string | null
+  secret_code?: string | null
+  has_bundle?: boolean
   created_at: string
   updated_at: string
 }
@@ -55,6 +57,7 @@ export type Testimonial = {
   message: string
   emoji_reactions: string
   is_active: boolean
+  is_approved: boolean
   created_at: string
 }
 
@@ -78,6 +81,7 @@ export type CartItem = {
   quantity: number
   price: number
   image: string
+  is_bundle?: boolean
 }
 
 export type Bundle = {

@@ -98,6 +98,7 @@ export function CustomBundleBuilder({ products }: CustomBundleBuilderProps) {
                 price: Math.round(product.price * discountMultiplier), // Apply discount to price
                 image: randomImage, // Use random default bundle image
                 quantity: 1,
+                is_bundle: true,
             })
         })
 

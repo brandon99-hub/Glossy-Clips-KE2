@@ -32,7 +32,7 @@ export async function markAsScanned(code: string) {
             return { success: false, error: "Code already scanned or invalid" }
         }
 
-        revalidatePath("/admin/qr-codes")
+        // Note: revalidatePath removed - admin page will update on next visit
         return { success: true }
     } catch (error) {
         console.error("Failed to mark QR as scanned:", error)

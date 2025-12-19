@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
-import { motion, useMotionValue, useTransform, animate } from "framer-motion"
+import { motion, useMotionValue, animate } from "framer-motion"
 
 interface SwipeNavigationProps {
     children: React.ReactNode
@@ -12,6 +12,7 @@ interface SwipeNavigationProps {
 export function SwipeNavigation({ children, currentPage }: SwipeNavigationProps) {
     const router = useRouter()
     const [isDragging, setIsDragging] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
     const x = useMotionValue(0)
 
     const touchStartX = useRef(0)
@@ -20,9 +21,14 @@ export function SwipeNavigation({ children, currentPage }: SwipeNavigationProps)
     const touchCurrentY = useRef(0)
     const isHorizontalSwipe = useRef(false)
 
+    // Check if mobile on mount to avoid hydration mismatch
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768)
+    }, [])
+
     useEffect(() => {
         // Only on mobile
-        if (typeof window === "undefined" || window.innerWidth >= 768) return
+        if (!isMobile) return
 
         const handleTouchStart = (e: TouchEvent) => {
             touchStartX.current = e.touches[0].clientX
@@ -114,18 +120,18 @@ export function SwipeNavigation({ children, currentPage }: SwipeNavigationProps)
             document.removeEventListener("touchmove", handleTouchMove)
             document.removeEventListener("touchend", handleTouchEnd)
         }
-    }, [currentPage, router, x])
+    }, [currentPage, router, x, isMobile])
 
     // Prefetch both pages for instant navigation
     useEffect(() => {
-        if (typeof window !== "undefined" && window.innerWidth < 768) {
+        if (isMobile) {
             router.prefetch("/")
             router.prefetch("/shop")
         }
-    }, [router])
+    }, [router, isMobile])
 
     // Only apply transform on mobile
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+    if (!isMobile) {
         return <>{children}</>
     }
 

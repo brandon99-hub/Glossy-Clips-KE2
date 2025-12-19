@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Testimonial } from "@/lib/db"
-import { addTestimonial, deleteTestimonial, updateTestimonial } from "./actions"
+import { addTestimonial, deleteTestimonial, updateTestimonial, toggleApproval } from "./actions"
 
 export function TestimonialsManager({ testimonials }: { testimonials: Testimonial[] }) {
   const router = useRouter()
@@ -172,13 +172,27 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
                 className="rounded-full object-cover"
               />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm">@{t.username}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-semibold text-sm">@{t.username}</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${t.is_approved ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {t.is_approved ? '✓ Approved' : '⏳ Pending'}
+                  </span>
+                </div>
                 <p className="text-sm text-muted-foreground mt-1">{t.message}</p>
                 {t.emoji_reactions && (
                   <p className="text-xs text-muted-foreground mt-2">Reactions: {t.emoji_reactions}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
+                <button
+                  onClick={async () => {
+                    await toggleApproval(t.id, t.is_approved)
+                    router.refresh()
+                  }}
+                  className={`px-3 py-1 text-xs rounded-md transition-colors ${t.is_approved ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                >
+                  {t.is_approved ? 'Unapprove' : 'Approve'}
+                </button>
                 <button
                   onClick={() => handleEdit(t)}
                   disabled={deleting === t.id}

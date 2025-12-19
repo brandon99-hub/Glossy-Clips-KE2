@@ -97,3 +97,53 @@ export async function getAdminSettings() {
         return { success: false, error: "Failed to fetch settings" }
     }
 }
+
+export async function getDiscountSetting() {
+    const cookieStore = await cookies()
+    const isLoggedIn = cookieStore.get("admin_session")
+
+    if (!isLoggedIn) {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        const settings = await sql`
+      SELECT setting_value FROM app_settings 
+      WHERE setting_key = 'secret_discount_percent'
+    `
+
+        const discountPercent = settings.length > 0 ? parseInt(settings[0].setting_value) : 10
+
+        return { success: true, discountPercent }
+    } catch (error) {
+        console.error("Error fetching discount setting:", error)
+        return { success: false, error: "Failed to fetch discount setting", discountPercent: 10 }
+    }
+}
+
+export async function updateDiscountSetting(discountPercent: number) {
+    const cookieStore = await cookies()
+    const isLoggedIn = cookieStore.get("admin_session")
+
+    if (!isLoggedIn) {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    if (discountPercent < 1 || discountPercent > 100) {
+        return { success: false, error: "Discount must be between 1% and 100%" }
+    }
+
+    try {
+        await sql`
+      INSERT INTO app_settings (setting_key, setting_value, updated_at)
+      VALUES ('secret_discount_percent', ${discountPercent.toString()}, NOW())
+      ON CONFLICT (setting_key) 
+      DO UPDATE SET setting_value = ${discountPercent.toString()}, updated_at = NOW()
+    `
+
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating discount setting:", error)
+        return { success: false, error: "Failed to update discount setting" }
+    }
+}

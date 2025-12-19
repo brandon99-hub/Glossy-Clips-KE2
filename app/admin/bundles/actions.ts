@@ -7,7 +7,7 @@ const DEFAULT_BUNDLE_IMAGES = [
   "/cute summer fridays lip gloss key chain charm….jpg",
   "/i love the new charms.jpg",
   "/Keep your lippie with you wherever you go by….jpg",
-  "/my pic💕.jpg",
+  "/my pic.jpg",
 ]
 
 function getRandomDefaultImage() {

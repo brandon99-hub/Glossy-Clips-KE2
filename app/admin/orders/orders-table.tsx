@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Clock, CheckCircle, Package, MapPin, Loader2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,7 +31,8 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     const matchesSearch =
       o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.reference_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.phone_number.includes(searchQuery)
+      o.phone_number.includes(searchQuery) ||
+      (o.secret_code && o.secret_code.toLowerCase().includes(searchQuery.toLowerCase()))
 
     let matchesDate = true
     if (startDate) {
@@ -117,10 +119,33 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
             return (
               <div key={order.id} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-start gap-4 mb-3">
+                  {/* Product Thumbnail */}
+                  {order.items.length > 0 && order.items[0].image && (
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                      <Image
+                        src={order.items[0].image}
+                        alt={order.items[0].name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Order Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-mono font-semibold">#{order.reference_code}</span>
+                      {order.secret_code && (
+                        <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          ㊙️ SECRET
+                        </span>
+                      )}
+                      {order.has_bundle && (
+                        <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          🎁 BUNDLE
+                        </span>
+                      )}
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
                       >
@@ -132,7 +157,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                       {order.customer_name} • {order.phone_number}
                     </p>
                   </div>
-                  <p className="font-semibold">KES {order.total_amount.toLocaleString()}</p>
+
+                  {/* Price */}
+                  <p className="font-semibold whitespace-nowrap">KES {order.total_amount.toLocaleString()}</p>
                 </div>
 
                 <div className="text-sm text-muted-foreground mb-3">
@@ -154,8 +181,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   <div className="space-y-1">
                     {order.items.map((item, i) => (
                       <div key={i} className="flex justify-between text-sm">
-                        <span>
+                        <span className="flex items-center gap-1">
                           {item.name} x{item.quantity}
+                          {item.is_bundle && <span className="text-blue-500" title="Bundle Item">🎁</span>}
                         </span>
                         <span>KES {(item.price * item.quantity).toLocaleString()}</span>
                       </div>

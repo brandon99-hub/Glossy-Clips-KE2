@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { sql, type SecretCode, type Product } from "@/lib/db"
 import { SecretMenuPage } from "./secret-menu"
 import { markAsScanned } from "@/app/admin/qr-codes/actions"
+import { cookies } from "next/headers"
 
 export default async function SecretPage({
   params,
@@ -9,6 +10,8 @@ export default async function SecretPage({
   params: Promise<{ code: string }>
 }) {
   const { code } = await params
+  const cookieStore = await cookies()
+  const isAdmin = cookieStore.get("admin_session")
 
   // Validate the secret code
   const codes = await sql`
@@ -22,14 +25,27 @@ export default async function SecretPage({
 
   const secretCode = codes[0] as SecretCode
 
+  // Get global discount percentage from app_settings
+  const settings = await sql`
+    SELECT setting_value FROM app_settings 
+    WHERE setting_key = 'secret_discount_percent'
+    LIMIT 1
+  `
+  const globalDiscountPercent = settings.length > 0
+    ? parseInt(settings[0].setting_value)
+    : 10
+
+  // Override the discount_percent with global setting
+  secretCode.discount_percent = globalDiscountPercent
+
   // Check if expired
   const isExpired = secretCode.expires_at && new Date(secretCode.expires_at) < new Date()
 
   // Check if already scanned (one-time scan only)
   const alreadyScanned = secretCode.is_scanned
 
-  // Mark as scanned if this is the first scan
-  if (!alreadyScanned && !isExpired && !secretCode.is_used) {
+  // Mark as scanned if this is the first scan AND user is NOT admin
+  if (!alreadyScanned && !isExpired && !secretCode.is_used && !isAdmin) {
     await markAsScanned(code)
   }
 
@@ -40,5 +56,8 @@ export default async function SecretPage({
     ORDER BY created_at DESC
   `
 
-  return <SecretMenuPage secretCode={secretCode} products={secretProducts as Product[]} isExpired={isExpired || false} alreadyScanned={alreadyScanned || false} />
+  // Admin can always view, customers see error if already scanned
+  const showScannedError = !isAdmin && alreadyScanned
+
+  return <SecretMenuPage secretCode={secretCode} products={secretProducts as Product[]} isExpired={isExpired || false} alreadyScanned={showScannedError || false} />
 }

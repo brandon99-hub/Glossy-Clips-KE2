@@ -11,10 +11,22 @@ export default async function AdminOrdersPage() {
     redirect("/admin/login")
   }
 
-  const orders = await sql<Order[]>`
-    SELECT * FROM orders 
-    ORDER BY created_at DESC
-  `
+  const orders = await sql`
+    SELECT o.*, 
+      sc.code as secret_code,
+      EXISTS(
+        SELECT 1 FROM bundles b 
+        WHERE b.is_active = true 
+        AND b.product_ids <@ (
+          SELECT array_agg((item->>'product_id')::int) 
+          FROM jsonb_array_elements(o.items) AS item
+        )
+      ) as has_bundle
+    FROM orders o
+    LEFT JOIN secret_codes sc ON o.id = sc.order_id 
+      AND sc.created_at < o.created_at
+    ORDER BY o.created_at DESC
+  ` as Order[]
 
   return (
     <div className="p-6 md:p-8">

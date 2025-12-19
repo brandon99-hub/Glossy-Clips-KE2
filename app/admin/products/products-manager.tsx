@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import Image from "next/image"
 import { createProduct, updateProduct, deleteProduct, toggleProductStatus } from "./actions"
 import { toast } from "sonner"
@@ -34,6 +44,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
     const [loading, setLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedDefaultImage, setSelectedDefaultImage] = useState("")
+    const [deleteProductId, setDeleteProductId] = useState<number | null>(null)
 
     // Form State
     const [formData, setFormData] = useState({
@@ -148,15 +159,16 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
         setLoading(false)
     }
 
-    const handleDelete = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this product?")) return
-        const res = await deleteProduct(id)
+    const handleDelete = async () => {
+        if (!deleteProductId) return
+        const res = await deleteProduct(deleteProductId)
         if (res.success) {
             toast.success("Product deleted")
-            setProducts(products.filter(p => p.id !== id))
+            setProducts(products.filter(p => p.id !== deleteProductId))
         } else {
             toast.error("Failed to delete")
         }
+        setDeleteProductId(null)
     }
 
     const filteredProducts = products.filter(p =>
@@ -399,7 +411,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                                 <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEdit(product)}>
                                     <Pencil className="w-3 h-3 mr-2" /> Edit
                                 </Button>
-                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(product.id)}>
+                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setDeleteProductId(product.id)}>
                                     <Trash2 className="w-3 h-3" />
                                 </Button>
                             </div>
@@ -413,6 +425,24 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                     No products found matching "{searchTerm}"
                 </div>
             )}
+
+            <AlertDialog open={deleteProductId !== null} onOpenChange={(open) => !open && setDeleteProductId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this product
+                            from your inventory and remove it from the store.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete Product
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/bundles", icon: PackageOpen, label: "Bundles" },
   { href: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
   { href: "/admin/qr-codes", icon: QrCode, label: "QR Codes" },
+  { href: "/admin/secret-page-link", icon: Sparkles, label: "Secret Page", isExternal: true },
 ]
 
 export function AdminSidebar() {

@@ -51,6 +51,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
           price: discountedPricePerProduct,
           image: bundleImage,
           quantity: 1,
+          is_bundle: true,
         })
       })
 

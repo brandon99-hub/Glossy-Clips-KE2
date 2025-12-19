@@ -22,8 +22,8 @@ export async function addTestimonial(formData: FormData) {
     }
 
     await sql`
-      INSERT INTO testimonials (username, profile_image, message, emoji_reactions)
-      VALUES (${username.replace("@", "")}, ${imageToUse}, ${message}, ${emoji_reactions})
+      INSERT INTO testimonials (username, profile_image, message, emoji_reactions, is_active, is_approved)
+      VALUES (${username.replace("@", "")}, ${imageToUse}, ${message}, ${emoji_reactions}, true, true)
     `
     return { success: true }
   } catch (error) {
@@ -66,6 +66,20 @@ export async function updateTestimonial(formData: FormData) {
     return { success: true }
   } catch (error) {
     console.error("Error updating testimonial:", error)
+    return { success: false }
+  }
+}
+
+export async function toggleApproval(id: number, currentStatus: boolean) {
+  try {
+    await sql`
+      UPDATE testimonials 
+      SET is_approved = ${!currentStatus}
+      WHERE id = ${id}
+    `
+    return { success: true }
+  } catch (error) {
+    console.error("Error toggling approval:", error)
     return { success: false }
   }
 }
