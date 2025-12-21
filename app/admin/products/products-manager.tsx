@@ -179,15 +179,15 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
     if (showForm) {
         return (
             <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold">{editingProduct ? "Edit Product" : "New Product"}</h2>
-                    <Button variant="ghost" onClick={() => { setShowForm(false); resetForm(); }}>Cancel</Button>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-xl font-bold">{editingProduct ? "Edit Product" : "New Product"}</h2>
+                    <Button variant="ghost" onClick={() => { setShowForm(false); resetForm(); }} className="min-h-[44px]">Cancel</Button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="grid md:grid-cols-[2fr_1fr] gap-8">
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+                    <div className="grid gap-6 sm:gap-8 lg:grid-cols-[2fr_1fr]">
                         {/* Left Column: Details */}
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                             <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-4">
                                 <h3 className="font-semibold flex items-center gap-2"><Tag className="w-4 h-4" /> Basic Info</h3>
                                 <div>
@@ -287,7 +287,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                                 {/* Default Image Selection */}
                                 <div>
                                     <p className="text-sm text-muted-foreground mb-2">Choose from default images:</p>
-                                    <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto">
                                         {DEFAULT_PRODUCT_IMAGES.map((img) => (
                                             <button
                                                 key={img}
@@ -296,7 +296,7 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                                                     setSelectedDefaultImage(img)
                                                     setFormData({ ...formData, images: [...formData.images, img] })
                                                 }}
-                                                className="relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:border-primary/50"
+                                                className="relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:border-primary/50 active:scale-95"
                                             >
                                                 <Image src={img} alt="Default product" fill className="object-cover" />
                                             </button>
@@ -307,20 +307,21 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                                 {/* Current Images */}
                                 <div>
                                     <p className="text-sm font-medium mb-2">Selected images:</p>
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                         {formData.images.map((img, idx) => (
                                             <div key={idx} className="relative aspect-square rounded-md overflow-hidden border">
                                                 <Image src={img} alt="Product" fill className="object-cover" />
                                                 <button
                                                     type="button"
                                                     onClick={() => removeImage(idx)}
-                                                    className="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white p-1 rounded-full transition-colors"
+                                                    className="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white p-1.5 rounded-full transition-colors active:scale-95"
+                                                    style={{ minWidth: '28px', minHeight: '28px' }}
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
                                             </div>
                                         ))}
-                                        <label className="flex flex-col items-center justify-center aspect-square rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer">
+                                        <label className="flex flex-col items-center justify-center aspect-square rounded-md border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer active:scale-95">
                                             <div className="text-center p-2">
                                                 {loading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : <Plus className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />}
                                                 <span className="text-xs text-muted-foreground">Upload</span>
@@ -334,9 +335,9 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>Cancel</Button>
-                        <Button type="submit" disabled={loading} className="min-w-[120px]">
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 pt-4 border-t sticky bottom-0 bg-background pb-safe-area-pb">
+                        <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm(); }} className="min-h-[44px]">Cancel</Button>
+                        <Button type="submit" disabled={loading} className="min-w-[120px] min-h-[44px]">
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             {editingProduct ? "Save Changes" : "Create Product"}
                         </Button>
@@ -348,12 +349,12 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold">Products</h1>
-                    <p className="text-muted-foreground">{products.length} items in inventory</p>
+                    <h1 className="text-xl sm:text-2xl font-bold">Products</h1>
+                    <p className="text-sm text-muted-foreground">{products.length} items in inventory</p>
                 </div>
-                <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
+                <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]">
                     <Plus className="w-4 h-4 mr-2" /> Add Product
                 </Button>
             </div>
@@ -408,10 +409,10 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
                             </div>
 
                             <div className="flex items-center gap-2 pt-3 border-t">
-                                <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEdit(product)}>
+                                <Button variant="outline" size="sm" className="flex-1 min-h-[44px]" onClick={() => handleEdit(product)}>
                                     <Pencil className="w-3 h-3 mr-2" /> Edit
                                 </Button>
-                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setDeleteProductId(product.id)}>
+                                <Button variant="destructive" size="icon" className="min-w-[44px] min-h-[44px]" onClick={() => setDeleteProductId(product.id)}>
                                     <Trash2 className="w-3 h-3" />
                                 </Button>
                             </div>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MessageCircle, X } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const WHATSAPP_NUMBER = "254745717591"
 
@@ -22,18 +23,25 @@ export function WhatsAppButton() {
   }
 
   return (
-    <>
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={handleClick}
-        className="fixed bottom-24 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-colors"
-        aria-label="Chat on WhatsApp"
-      >
-        <MessageCircle className="w-6 h-6" />
-      </motion.button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleClick}
+            className="fixed bottom-24 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-colors"
+            aria-label="Chat on WhatsApp"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </motion.button>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="bg-green-600 text-white border-0">
+          <p className="font-medium">Chat with us on WhatsApp</p>
+        </TooltipContent>
+      </Tooltip>
 
       <AnimatePresence>
         {isOpen && (
@@ -61,6 +69,6 @@ export function WhatsAppButton() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </TooltipProvider>
   )
 }

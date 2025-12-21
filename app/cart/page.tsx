@@ -3,32 +3,89 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCart } from "@/lib/cart-context"
+import type { PickupMtaaniLocation } from "@/lib/db"
+import { toast } from "sonner"
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalAmount } = useCart()
-  const [deliveryMethod, setDeliveryMethod] = useState<"self-pickup" | "pickup-mtaani">("self-pickup")
+  const { items, removeItem, updateQuantity, totalAmount, addItem } = useCart()
+  const [locations, setLocations] = useState<PickupMtaaniLocation[]>([])
+  const [selectedLocation, setSelectedLocation] = useState<PickupMtaaniLocation | null>(null)
+  const searchParams = useSearchParams()
+  const isReorder = searchParams.get('reorder') === 'true'
 
-  // Load saved delivery method
+  // Fetch Pickup Mtaani locations first
   useEffect(() => {
-    const saved = localStorage.getItem("deliveryMethod")
-    if (saved === "pickup-mtaani") {
-      setDeliveryMethod("pickup-mtaani")
+    async function fetchLocations() {
+      try {
+        const response = await fetch("/api/pickup-locations")
+        if (response.ok) {
+          const data = await response.json()
+          setLocations(data.locations || [])
+        }
+      } catch (error) {
+        console.error("Error fetching locations:", error)
+      }
     }
+    fetchLocations()
   }, [])
 
-  // Save delivery method whenever it changes
+  // Handle reorder items from localStorage
   useEffect(() => {
-    localStorage.setItem("deliveryMethod", deliveryMethod)
-  }, [deliveryMethod])
+    if (isReorder) {
+      const reorderItems = localStorage.getItem('reorder_items')
 
-  const estimatedDeliveryFee = deliveryMethod === "pickup-mtaani" ? 100 : 0
-  const estimatedTotal = totalAmount + estimatedDeliveryFee
+      if (reorderItems) {
+        try {
+          const items = JSON.parse(reorderItems)
+          // Add each item to cart
+          items.forEach((item: any) => {
+            addItem({
+              product_id: item.product_id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image || "",
+            })
+          })
+
+          // Clean up reorder items
+          localStorage.removeItem('reorder_items')
+
+          toast.success("Order items added to cart!", {
+            description: `${items.length} item(s) ready for checkout`,
+          })
+        } catch (error) {
+          console.error('Failed to load reorder items:', error)
+          toast.error("Failed to load order items")
+        }
+      }
+    }
+  }, [isReorder, addItem])
+
+  // Auto-select location after locations are loaded (separate effect)
+  useEffect(() => {
+    if (isReorder && locations.length > 0) {
+      const reorderLocationId = localStorage.getItem('reorder_location_id')
+
+      if (reorderLocationId) {
+        const loc = locations.find(l => l.id === parseInt(reorderLocationId))
+        if (loc) {
+          setSelectedLocation(loc)
+          // Clean up after successful selection
+          localStorage.removeItem('reorder_location_id')
+        }
+      }
+    }
+  }, [isReorder, locations])
+  const deliveryFee = selectedLocation?.delivery_fee || 0
+  const estimatedTotal = Number(totalAmount) + Number(deliveryFee)
 
   if (items.length === 0) {
     return (
@@ -106,27 +163,33 @@ export default function CartPage() {
           </AnimatePresence>
         </div>
 
-        {/* Delivery Method Selector */}
+        {/* Pickup Location Selector - EXACT COPY from checkout */}
         <div className="bg-muted rounded-xl p-4 mb-4">
-          <Label className="text-sm font-medium mb-3 block">Delivery Method</Label>
-          <RadioGroup value={deliveryMethod} onValueChange={(value: any) => setDeliveryMethod(value)}>
-            <div className="flex items-center space-x-2 mb-2">
-              <RadioGroupItem value="self-pickup" id="self" />
-              <Label htmlFor="self" className="font-normal cursor-pointer text-sm">
-                Self Pickup (Free)
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="pickup-mtaani" id="mtaani" />
-              <Label htmlFor="mtaani" className="font-normal cursor-pointer text-sm">
-                Pickup Mtaani (KES 100-150)
-              </Label>
-            </div>
-          </RadioGroup>
-          <p className="text-xs text-muted-foreground mt-2">
-            {deliveryMethod === "pickup-mtaani"
-              ? "Select exact location at checkout"
-              : "We'll send you pickup details after payment"}
+          <Label htmlFor="pickup-location">Pickup Mtaani Location</Label>
+          <Select
+            onValueChange={(value) => {
+              const loc = locations.find((l) => l.id === parseInt(value))
+              setSelectedLocation(loc || null)
+            }}
+            required
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations.map((loc) => (
+                <SelectItem key={loc.id} value={loc.id.toString()}>
+                  <div className="flex items-center w-full max-w-[280px] md:max-w-md">
+                    <span className="truncate">
+                      {loc.name} - {loc.area} (KES {loc.delivery_fee})
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Delivery fee: KES {selectedLocation?.delivery_fee || 0}
           </p>
         </div>
 
@@ -136,17 +199,13 @@ export default function CartPage() {
             <span className="text-muted-foreground">Subtotal</span>
             <span>KES {totalAmount.toLocaleString()}</span>
           </div>
-          {deliveryMethod === "pickup-mtaani" && (
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-muted-foreground">Delivery Fee</span>
-              <span className="text-sm">~KES {estimatedDeliveryFee}</span>
-            </div>
-          )}
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-muted-foreground">Delivery Fee</span>
+            <span className="text-sm">KES {deliveryFee}</span>
+          </div>
           <div className="border-t border-border pt-2 mt-2 flex justify-between items-center">
             <span className="font-semibold">Total</span>
-            <span className="font-bold text-lg">
-              {deliveryMethod === "pickup-mtaani" ? "~" : ""}KES {estimatedTotal.toLocaleString()}
-            </span>
+            <span className="font-bold text-lg">KES {estimatedTotal.toLocaleString()}</span>
           </div>
         </div>
 
@@ -157,8 +216,13 @@ export default function CartPage() {
         </div>
 
         {/* Checkout Button */}
-        <Button asChild size="lg" className="w-full bg-primary hover:bg-primary/90">
-          <Link href={`/checkout?delivery=${deliveryMethod}`}>
+        <Button
+          asChild
+          size="lg"
+          className="w-full bg-primary hover:bg-primary/90"
+          disabled={!selectedLocation}
+        >
+          <Link href={`/checkout?locationId=${selectedLocation?.id || ''}`}>
             Proceed to Checkout <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>

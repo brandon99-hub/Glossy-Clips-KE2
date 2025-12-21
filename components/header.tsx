@@ -2,15 +2,18 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingBag, Settings } from "lucide-react"
+import { ShoppingBag, Settings, UserCircle, ChevronDown, LayoutDashboard, LogOut } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+import { useSession, signOut } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState } from "react"
 import { useCategories } from "@/hooks/use-categories"
 
 export function Header() {
   const { totalItems } = useCart()
+  const { data: session } = useSession()
   const [isAdmin, setIsAdmin] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const { categories } = useCategories()
 
   useEffect(() => {
@@ -21,6 +24,18 @@ export function Header() {
       setIsAdmin(hasAdminSession)
     }
     checkAdmin()
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.user-menu-container')) {
+        setShowUserMenu(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
   return (
@@ -59,7 +74,7 @@ export function Header() {
             </Link>
           )}
 
-          {/* Cart */}
+          {/* Cart - Now before user icon */}
           <Link href="/cart" className="relative p-2.5 hover:bg-rose-50 rounded-full transition-colors group">
             <ShoppingBag className="h-5 w-5 text-gray-700 group-hover:text-rose-600 transition-colors" />
             <AnimatePresence>
@@ -75,6 +90,75 @@ export function Header() {
               )}
             </AnimatePresence>
           </Link>
+
+          {/* User Account - Now at far right with dropdown */}
+          <div className="relative user-menu-container">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="relative p-2.5 hover:bg-rose-50 rounded-full transition-colors group flex items-center gap-1"
+            >
+              {session?.user ? (
+                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold">
+                  {session.user.name?.[0]?.toUpperCase() || session.user.email?.[0]?.toUpperCase() || "U"}
+                </div>
+              ) : (
+                <UserCircle className="h-5 w-5 text-gray-700 group-hover:text-rose-600 transition-colors" />
+              )}
+              {session?.user && (
+                <ChevronDown className="h-3 w-3 text-gray-700 group-hover:text-rose-600 transition-colors" />
+              )}
+            </button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {showUserMenu && session?.user && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+                >
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium">Dashboard</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      signOut({ callbackUrl: "/" })
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-left border-t"
+                  >
+                    <LogOut className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Login link for non-logged-in users */}
+            {!session?.user && showUserMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+              >
+                <Link
+                  href="/login"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <UserCircle className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium">Login</span>
+                </Link>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </header>

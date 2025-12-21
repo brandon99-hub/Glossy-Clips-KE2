@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { adminLogout } from "@/app/admin/login/actions"
 
 const navItems = [
@@ -22,6 +22,18 @@ export function AdminSidebar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileOpen])
+
   const handleLogout = async () => {
     await adminLogout()
     router.push("/admin/login")
@@ -30,12 +42,16 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile toggle */}
+      {/* Mobile toggle - positioned to not overlap logo */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden bg-background border border-border p-2 rounded-lg shadow-sm"
+        className="fixed top-4 right-4 z-50 md:hidden bg-background border border-border rounded-lg shadow-lg hover:shadow-xl transition-all active:scale-95"
+        style={{ minWidth: '44px', minHeight: '44px' }}
+        aria-label={mobileOpen ? "Close menu" : "Open menu"}
       >
-        {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <div className="flex items-center justify-center w-full h-full">
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </div>
       </button>
 
       {/* Overlay */}
@@ -48,17 +64,10 @@ export function AdminSidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="p-6 border-b border-border flex items-center justify-between">
+        <div className="p-6 border-b border-border">
           <Link href="/admin" className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
             <span className="font-semibold">GLOSSYCLIPSKE</span>
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-5 h-5 text-muted-foreground hover:text-foreground" />
           </Link>
         </div>
 
@@ -85,19 +94,19 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border">
+        <div className="p-4 pb-20 md:pb-4 border-t border-border">
           <div className="flex gap-2">
             <Link
               href="/admin/settings"
               onClick={() => setMobileOpen(false)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors min-h-[44px]"
             >
               <Settings className="w-5 h-5" />
               Settings
             </Link>
             <button
               onClick={handleLogout}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors min-h-[44px]"
             >
               <LogOut className="w-5 h-5" />
               Logout

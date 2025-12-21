@@ -2,14 +2,14 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { ChevronLeft, Copy, Check, Loader2, MessageCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useCart } from "@/lib/cart-context"
@@ -19,52 +19,61 @@ import type { PickupMtaaniLocation } from "@/lib/db"
 const MPESA_PHONE = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "254741991213"
 const MPESA_BUSINESS_NAME = process.env.NEXT_PUBLIC_MPESA_BUSINESS_NAME || "GlossyClipsKE"
 
-export default function CheckoutPage({ searchParams }: { searchParams: Promise<{ delivery?: string }> }) {
+export default function CheckoutPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { data: session } = useSession()
   const { items, totalAmount, clearCart } = useCart()
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [locations, setLocations] = useState<PickupMtaaniLocation[]>([])
   const [selectedLocation, setSelectedLocation] = useState<PickupMtaaniLocation | null>(null)
-  const [deliveryMethod, setDeliveryMethod] = useState<"self-pickup" | "pickup-mtaani">("self-pickup")
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    location: "",
   })
 
-  // Get delivery method from URL params
-  // Get delivery method from URL params or localStorage
+  // Get location from URL params and auto-fill user details
   useEffect(() => {
-    const saved = localStorage.getItem("deliveryMethod")
-    if (saved === "pickup-mtaani") {
-      setDeliveryMethod("pickup-mtaani")
+    const locationId = searchParams.get('locationId')
+    const reorderPhone = localStorage.getItem('reorder_phone')
+
+    if (locationId) {
+      // Fetch the location details
+      fetch("/api/pickup-locations")
+        .then(res => res.json())
+        .then(data => {
+          const loc = data.locations?.find((l: PickupMtaaniLocation) => l.id === parseInt(locationId))
+          if (loc) setSelectedLocation(loc)
+        })
+        .catch(err => console.error("Error fetching location:", err))
     }
 
-    async function getParams() {
-      const params = await searchParams
-      if (params.delivery) {
-        setDeliveryMethod(params.delivery as "self-pickup" | "pickup-mtaani")
-      }
-    }
-    getParams()
-  }, [searchParams])
+    // Auto-fill user details if logged in
+    if (session?.user) {
+      setFormData(prev => ({
+        ...prev,
+        name: session.user.name || "",
+        // Auto-fill phone from reorder if available, otherwise leave empty
+        phone: reorderPhone || prev.phone,
+      }))
 
-  // Fetch Pickup Mtaani locations
-  useEffect(() => {
-    async function fetchLocations() {
-      try {
-        const response = await fetch("/api/pickup-locations")
-        if (response.ok) {
-          const data = await response.json()
-          setLocations(data.locations || [])
-        }
-      } catch (error) {
-        console.error("Error fetching locations:", error)
+      // Clean up reorder phone after using it
+      if (reorderPhone) {
+        localStorage.removeItem('reorder_phone')
+        localStorage.removeItem('reorder_location') // Clean up location too
       }
+    } else if (reorderPhone) {
+      // For guest users, still auto-fill the phone
+      setFormData(prev => ({
+        ...prev,
+        phone: reorderPhone,
+      }))
+
+      // Clean up
+      localStorage.removeItem('reorder_phone')
+      localStorage.removeItem('reorder_location')
     }
-    fetchLocations()
-  }, [])
+  }, [searchParams, session])
 
   if (items.length === 0) {
     return (
@@ -80,7 +89,7 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
     )
   }
 
-  const deliveryFee = deliveryMethod === "pickup-mtaani" && selectedLocation ? selectedLocation.delivery_fee : 0
+  const deliveryFee = selectedLocation?.delivery_fee || 0
   const finalTotal = Number(totalAmount) + Number(deliveryFee)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,8 +113,8 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
       const result = await createOrder({
         customerName: formData.name,
         phoneNumber: formattedPhone,
-        pickupLocation: deliveryMethod === "self-pickup" ? formData.location : selectedLocation?.name || "",
-        deliveryMethod: deliveryMethod,
+        pickupLocation: selectedLocation?.name || "",
+        deliveryMethod: "pickup-mtaani",
         deliveryFee: Number(deliveryFee),
         pickupMtaaniLocationId: selectedLocation?.id,
         items: items.map(item => ({
@@ -115,7 +124,7 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
         })),
         totalAmount: Number(finalTotal),
         secretCode: typeof window !== 'undefined' ? localStorage.getItem('active_secret_code') || undefined : undefined,
-      })
+      }, session?.user?.id ? parseInt(session.user.id) : undefined)
 
       if (result.success && result.referenceCode) {
         // Notify owner via WhatsApp
@@ -125,8 +134,8 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
           customerName: formData.name,
           phoneNumber: formattedPhone,
           totalAmount: Number(finalTotal),
-          deliveryMethod: deliveryMethod,
-          pickupLocation: deliveryMethod === "self-pickup" ? formData.location : selectedLocation?.name || "",
+          deliveryMethod: "pickup-mtaani",
+          pickupLocation: selectedLocation?.name || "",
         })
 
         // Clear secret code from localStorage after successful order
@@ -239,50 +248,17 @@ export default function CheckoutPage({ searchParams }: { searchParams: Promise<{
                 />
               </div>
 
-              {/* Conditional Location Input based on cart selection */}
-              {deliveryMethod === "self-pickup" ? (
-                <div>
-                  <Label htmlFor="location">Meeting Point</Label>
-                  <Input
-                    id="location"
-                    placeholder="e.g. Westlands, CBD, or specific location"
-                    value={formData.location}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
-                    required
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">We'll send you pickup details after payment</p>
+              {/* Show selected location (read-only) */}
+              <div>
+                <Label>Pickup Location</Label>
+                <div className="mt-1 px-3 py-2 bg-muted rounded-md text-sm">
+                  {selectedLocation ? (
+                    <span>{selectedLocation.name} - {selectedLocation.area} (KES {selectedLocation.delivery_fee})</span>
+                  ) : (
+                    <span className="text-muted-foreground">No location selected</span>
+                  )}
                 </div>
-              ) : (
-                <div>
-                  <Label htmlFor="pickup-location">Pickup Mtaani Location</Label>
-                  <Select
-                    onValueChange={(value) => {
-                      const loc = locations.find((l) => l.id === parseInt(value))
-                      setSelectedLocation(loc || null)
-                    }}
-                    required
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((loc) => (
-                        <SelectItem key={loc.id} value={loc.id.toString()}>
-                          <div className="flex items-center w-full max-w-[280px] md:max-w-md">
-                            <span className="truncate">
-                              {loc.name} - {loc.area} (KES {loc.delivery_fee})
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Delivery fee: KES {selectedLocation?.delivery_fee || 0}
-                  </p>
-                </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 

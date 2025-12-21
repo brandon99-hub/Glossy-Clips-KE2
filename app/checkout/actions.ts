@@ -12,7 +12,7 @@ function generateReferenceCode(): string {
   return code
 }
 
-export async function createOrder(data: OrderInput) {
+export async function createOrder(data: OrderInput, customerId?: number) {
   try {
     // Validate input data
     const validated = orderSchema.parse(data)
@@ -43,6 +43,7 @@ export async function createOrder(data: OrderInput) {
     const orderResult = await sql`
       INSERT INTO orders (
         reference_code, 
+        customer_id,
         customer_name, 
         phone_number, 
         pickup_location, 
@@ -54,6 +55,7 @@ export async function createOrder(data: OrderInput) {
         status
       ) VALUES (
         ${referenceCode},
+        ${customerId || null},
         ${validated.customerName},
         ${validated.phoneNumber},
         ${validated.pickupLocation},

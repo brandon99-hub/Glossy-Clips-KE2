@@ -4,6 +4,7 @@ import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useWishlist } from "@/lib/wishlist-context"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface WishlistButtonProps {
     productId: number
@@ -25,8 +26,18 @@ export function WishlistButton({
 
         if (inWishlist) {
             removeFromWishlist(productId)
+            toast.success("Removed from wishlist", {
+                description: "Product removed from your saved items",
+            })
         } else {
             addToWishlist(productId)
+            toast.success("Added to wishlist! 💕", {
+                description: "View your saved items in your dashboard",
+                action: {
+                    label: "View Wishlist",
+                    onClick: () => window.location.href = "/dashboard?tab=wishlist",
+                },
+            })
         }
     }
 
@@ -35,7 +46,7 @@ export function WishlistButton({
             <button
                 onClick={handleClick}
                 className={cn(
-                    "p-2 rounded-full transition-all hover:scale-110",
+                    "p-2 rounded-full bg-white/90 backdrop-blur-sm transition-all hover:scale-110 shadow-sm",
                     inWishlist
                         ? "text-rose-500 hover:text-rose-600"
                         : "text-muted-foreground hover:text-foreground",

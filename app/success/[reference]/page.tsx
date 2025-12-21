@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { GiftCardRevealModal } from "@/components/gift-card-reveal"
+import { AccountCreationPrompt } from "@/components/account-creation-prompt"
 
 const MPESA_PHONE = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "254741991213"
 const MPESA_BUSINESS_NAME = process.env.NEXT_PUBLIC_MPESA_BUSINESS_NAME || "GlossyClipsKE"
@@ -46,6 +47,9 @@ export default function SuccessPage() {
 
         {/* Gift Card Reveal Modal */}
         <GiftCardRevealModal />
+
+        {/* Account Creation Prompt */}
+        <AccountCreationPrompt referenceCode={reference} />
 
         {/* Payment Instructions Card */}
         <Card className="mb-6 bg-green-50 border-green-200">

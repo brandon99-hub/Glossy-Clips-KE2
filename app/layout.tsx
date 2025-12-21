@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "sonner"
 import { CartProvider } from "@/lib/cart-context"
 import { WishlistProvider } from "@/lib/wishlist-context"
+import { AuthProvider } from "@/components/auth-provider"
 import { Header } from "@/components/header"
 import { MobileNav } from "@/components/mobile-nav"
 import { WhatsAppButton } from "@/components/whatsapp-button"
@@ -47,15 +48,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${dancing.variable} font-sans antialiased`}>
-        <CartProvider>
-          <WishlistProvider>
-            <Header />
-            <main className="min-h-screen pb-20 md:pb-0">{children}</main>
-            <Footer />
-            <MobileNav />
-            <WhatsAppButton />
-          </WishlistProvider>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <Header />
+              <main className="min-h-screen pb-20 md:pb-0">{children}</main>
+              <Footer />
+              <MobileNav />
+              <WhatsAppButton />
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
         <Toaster
           position="top-center"
           toastOptions={{

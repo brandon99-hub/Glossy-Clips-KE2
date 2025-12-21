@@ -37,6 +37,8 @@ export type Order = {
   pickup_mtaani_location?: string | null
   secret_code?: string | null
   has_bundle?: boolean
+  customer_id?: number | null
+  estimated_delivery?: string | null
   created_at: string
   updated_at: string
 }
@@ -58,6 +60,7 @@ export type Testimonial = {
   emoji_reactions: string
   is_active: boolean
   is_approved: boolean
+  customer_id?: number | null  // For verified customer testimonials
   created_at: string
 }
 
@@ -149,5 +152,61 @@ export type Category = {
   created_at: string
 }
 
+// Customer Account Types
+export type Customer = {
+  id: number
+  email: string
+  password_hash: string
+  name: string | null
+  phone_number: string | null
+  created_at: string
+  updated_at: string
+}
 
+export type CustomerAddress = {
+  id: number
+  customer_id: number
+  address_type: string
+  location: string
+  phone_number: string | null
+  is_default: boolean
+  created_at: string
+}
 
+export type CustomerReview = {
+  id: number
+  product_id: number
+  customer_id: number
+  order_id: number
+  rating: number
+  review_text: string | null
+  review_images: string[]
+  is_verified: boolean
+  is_approved: boolean
+  created_at: string
+  // Joined fields
+  customer_name?: string
+  customer_email?: string
+  product_name?: string
+}
+
+export type ProductWaitlist = {
+  id: number
+  product_id: number
+  customer_id: number
+  email: string
+  notified: boolean
+  created_at: string
+}
+
+export type AbandonedCart = {
+  id: number
+  customer_id: number | null
+  session_id: string | null
+  cart_items: CartItem[]
+  total_amount: number
+  email_sent: boolean
+  recovered: boolean
+  created_at: string
+  updated_at: string
+}

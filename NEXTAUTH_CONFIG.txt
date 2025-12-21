@@ -1,0 +1,8 @@
+# NextAuth Environment Variables
+# Copy these to your .env file
+
+NEXTAUTH_SECRET=ZhFCXtFbQuHaqLy85XIsfkPMJ0OteXpS/r9dnEj33Cw=
+NEXTAUTH_URL=http://localhost:3000
+
+# For production, change NEXTAUTH_URL to your actual domain:
+# NEXTAUTH_URL=https://yourdomain.com

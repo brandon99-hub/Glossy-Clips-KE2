@@ -103,10 +103,10 @@ export default function AdminSettingsPage() {
     const discountedPrice = Math.round(examplePrice * (1 - discountPercent / 100))
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Admin Settings</h1>
+        <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Admin Settings</h1>
 
-            <div className="grid gap-6">
+            <div className="grid gap-4 sm:gap-6">
                 {/* Email Settings */}
                 <div className="bg-white rounded-lg border p-6">
                     <div className="flex items-center gap-2 mb-4">
@@ -138,7 +138,7 @@ export default function AdminSettingsPage() {
                         )}
                         <Button
                             type="submit"
-                            className="bg-rose-500 hover:bg-rose-600"
+                            className="bg-rose-500 hover:bg-rose-600 w-full sm:w-auto min-h-[44px]"
                             disabled={loading}
                         >
                             {loading ? (
@@ -218,7 +218,7 @@ export default function AdminSettingsPage() {
                         )}
                         <Button
                             type="submit"
-                            className="bg-rose-500 hover:bg-rose-600"
+                            className="bg-rose-500 hover:bg-rose-600 w-full sm:w-auto min-h-[44px]"
                             disabled={loadingPassword}
                         >
                             {loadingPassword ? (
@@ -287,7 +287,7 @@ export default function AdminSettingsPage() {
                         )}
                         <Button
                             type="submit"
-                            className="bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600"
+                            className="bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 w-full sm:w-auto min-h-[44px]"
                             disabled={loadingDiscount}
                         >
                             {loadingDiscount ? (

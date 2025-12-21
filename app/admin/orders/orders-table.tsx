@@ -57,42 +57,52 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
   return (
     <div>
       {/* Search and Filters */}
-      <div className="bg-card border border-border rounded-xl p-4 mb-6 space-y-4">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="md:col-span-1">
-            <Label>Search</Label>
-            <div className="relative">
+      <div className="bg-card border border-border rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
+          <div className="sm:col-span-3 md:col-span-1">
+            <Label className="text-sm">Search</Label>
+            <div className="relative mt-1.5">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Customer, reference, phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 h-10 sm:h-9"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:col-span-2">
+          <div className="grid grid-cols-2 gap-2 sm:col-span-3 md:col-span-2">
             <div>
-              <Label>From Date</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Label className="text-sm">From Date</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-1.5 h-10 sm:h-9"
+              />
             </div>
             <div>
-              <Label>To Date</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Label className="text-sm">To Date</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-1.5 h-10 sm:h-9"
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+      <div className="flex gap-2 mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
         {["all", "pending", "paid", "packed", "collected"].map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === status
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+            className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[36px] ${filter === status
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 active:bg-muted/90"
               }`}
           >
             {status === "all" ? "All" : statusConfig[status as keyof typeof statusConfig].label}
@@ -118,11 +128,11 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                     : null
 
             return (
-              <div key={order.id} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-start gap-4 mb-3">
+              <div key={order.id} className="bg-card border border-border rounded-xl p-3 sm:p-4">
+                <div className="flex items-start gap-3 sm:gap-4 mb-3">
                   {/* Product Thumbnail */}
                   {order.items.length > 0 && order.items[0].image && (
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                       <Image
                         src={order.items[0].image}
                         alt={order.items[0].name}
@@ -134,32 +144,34 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
                   {/* Order Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-mono font-semibold">#{order.reference_code}</span>
-                      {order.secret_code && (
-                        <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                          ㊙️ SECRET
+                    <div className="flex items-start sm:items-center gap-1.5 sm:gap-2 mb-1.5 flex-wrap">
+                      <span className="font-mono font-semibold text-sm sm:text-base">#{order.reference_code}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {order.secret_code && (
+                          <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap">
+                            ㊙️ SECRET
+                          </span>
+                        )}
+                        {order.has_bundle && (
+                          <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap">
+                            🎁 BUNDLE
+                          </span>
+                        )}
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
+                        >
+                          <StatusIcon className="w-3 h-3" />
+                          {status.label}
                         </span>
-                      )}
-                      {order.has_bundle && (
-                        <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                          🎁 BUNDLE
-                        </span>
-                      )}
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
-                      >
-                        <StatusIcon className="w-3 h-3" />
-                        {status.label}
-                      </span>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
                       {order.customer_name} • {order.phone_number}
                     </p>
                   </div>
 
                   {/* Price */}
-                  <p className="font-semibold whitespace-nowrap">KES {order.total_amount.toLocaleString()}</p>
+                  <p className="font-semibold whitespace-nowrap text-sm sm:text-base">KES {order.total_amount.toLocaleString()}</p>
                 </div>
 
                 <div className="text-sm text-muted-foreground mb-3">
@@ -196,8 +208,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                   <Button
                     onClick={() => handleStatusUpdate(order.id, nextStatus)}
                     disabled={loading === order.id}
-                    className="w-full bg-primary hover:bg-primary/90"
+                    className="w-full bg-primary hover:bg-primary/90 active:bg-primary/80"
                     size="sm"
+                    style={{ minHeight: '44px' }}
                   >
                     {loading === order.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
