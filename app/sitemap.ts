@@ -6,13 +6,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Fetch all active products
     const products = await sql`
-    SELECT slug, updated_at FROM products 
+    SELECT slug, created_at FROM products 
     WHERE is_active = true AND is_secret = false
-  ` as unknown as { slug: string, updated_at: string }[]
+  ` as unknown as { slug: string, created_at: string }[]
 
     const productEntries: MetadataRoute.Sitemap = products.map((product) => ({
         url: `${baseUrl}/product/${product.slug}`,
-        lastModified: new Date(product.updated_at),
+        lastModified: new Date(product.created_at),
         changeFrequency: 'weekly',
         priority: 0.8,
     }))
