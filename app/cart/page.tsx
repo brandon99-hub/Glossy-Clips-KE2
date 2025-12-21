@@ -13,7 +13,9 @@ import { useCart } from "@/lib/cart-context"
 import type { PickupMtaaniLocation } from "@/lib/db"
 import { toast } from "sonner"
 
-export default function CartPage() {
+import { Suspense } from "react"
+
+function CartContent() {
   const { items, removeItem, updateQuantity, totalAmount, addItem } = useCart()
   const [locations, setLocations] = useState<PickupMtaaniLocation[]>([])
   const [selectedLocation, setSelectedLocation] = useState<PickupMtaaniLocation | null>(null)
@@ -228,5 +230,20 @@ export default function CartPage() {
         </Button>
       </div>
     </div>
+  )
+}
+
+export default function CartPage() {
+  return (
+    <Suspense fallback={
+      <div className="py-16 px-4 text-center">
+        <div className="container mx-auto max-w-md">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your cart...</p>
+        </div>
+      </div>
+    }>
+      <CartContent />
+    </Suspense>
   )
 }

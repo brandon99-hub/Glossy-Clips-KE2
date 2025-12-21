@@ -109,12 +109,24 @@ export default async function ShopPage({
 
   try {
     if (search) {
+      // Use PostgreSQL Full-Text Search with ranking
+      // 'A' weight for name, 'B' weight for description
+      const searchTerms = search.trim().split(/\s+/).join(" & ")
       products = await sql`
-        SELECT * FROM products 
+        SELECT *, 
+          ts_rank_cd(
+            setweight(to_tsvector('english', name), 'A') || 
+            setweight(to_tsvector('english', COALESCE(description, '')), 'B'),
+            to_tsquery('english', ${searchTerms})
+          ) AS rank
+        FROM products 
         WHERE is_active = true 
         AND is_secret = false 
-        AND (name ILIKE ${'%' + search + '%'} OR description ILIKE ${'%' + search + '%'})
-        ORDER BY created_at DESC
+        AND (
+          setweight(to_tsvector('english', name), 'A') || 
+          setweight(to_tsvector('english', COALESCE(description, '')), 'B')
+        ) @@ to_tsquery('english', ${searchTerms})
+        ORDER BY rank DESC, created_at DESC
       ` as unknown as Product[]
     } else if (category) {
       products = await sql`

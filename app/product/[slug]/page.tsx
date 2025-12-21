@@ -1,6 +1,33 @@
 import { notFound } from "next/navigation"
 import { sql, type Product } from "@/lib/db"
 import { ProductDetails } from "./product-details"
+import type { Metadata } from "next"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const products = await sql`
+    SELECT * FROM products WHERE slug = ${slug} AND is_active = true
+  ` as unknown as Product[]
+
+  if (!products.length) return { title: "Product Not Found" }
+
+  const product = products[0]
+  const ogImage = product.images && product.images.length > 0 ? product.images[0] : "/logo.jpeg"
+
+  return {
+    title: `${product.name} | GLOSSYCLIPSKE`,
+    description: product.description.substring(0, 160),
+    openGraph: {
+      title: product.name,
+      description: product.description,
+      images: [{ url: ogImage }],
+    },
+  }
+}
 
 export default async function ProductPage({
   params,
@@ -9,10 +36,10 @@ export default async function ProductPage({
 }) {
   const { slug } = await params
 
-  const products = await sql<Product[]>`
+  const products = await sql`
     SELECT * FROM products 
     WHERE slug = ${slug} AND is_active = true
-  `
+  ` as unknown as Product[]
 
   if (!products.length) {
     notFound()
@@ -25,5 +52,36 @@ export default async function ProductPage({
     notFound()
   }
 
-  return <ProductDetails product={product} />
+  // Structured Data (JSON-LD)
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: product.images,
+    description: product.description,
+    sku: product.id.toString(),
+    brand: {
+      "@type": "Brand",
+      name: "GLOSSYCLIPSKE",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/product/${product.slug}`,
+      priceCurrency: "KES",
+      price: product.price,
+      availability: (product.stock_quantity || 0) > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+    },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetails product={product} />
+    </>
+  )
 }
