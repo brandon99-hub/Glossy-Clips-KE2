@@ -162,60 +162,59 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
     return (
         <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-white">
             {/* Header */}
-            <div className="bg-white/80 backdrop-blur-lg border-b border-white/20 sticky top-0 z-10">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+            <div className="bg-white/80 backdrop-blur-lg border-b border-white/20 sticky top-0 z-20">
+                <div className="container mx-auto px-4 py-3 sm:py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="text-center sm:text-left">
+                            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
                                 My Dashboard
                             </h1>
-                            <p className="text-sm text-muted-foreground">Welcome back, {customer.name || "Gloss Babe"}!</p>
+                            <p className="text-[10px] sm:text-sm text-muted-foreground">Welcome back, {customer.name || "Gloss Babe"}!</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Link href="/">
-                                <Button variant="outline" size="sm">
-                                    <ShoppingBag className="w-4 h-4 mr-2" />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Link href="/" className="w-full sm:w-auto">
+                                <Button variant="outline" size="sm" className="w-full text-xs h-9">
+                                    <ShoppingBag className="w-3.5 h-3.5 mr-2" />
                                     Continue Shopping
                                 </Button>
                             </Link>
-
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-6 sm:py-8">
                 {/* Tabs - Orders, Wishlist, and Profile */}
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 mb-8 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide sticky top-[72px] sm:top-[88px] bg-gradient-to-br from-rose-50/90 via-pink-50/90 to-white/90 backdrop-blur-md z-10 sm:relative sm:top-0 sm:bg-transparent sm:backdrop-blur-none sm:pb-2">
                     <button
                         onClick={() => setActiveTab("orders")}
-                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeTab === "orders"
-                            ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                        className={`flex items-center justify-center px-4 py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all active:scale-95 shadow-sm border border-white/40 ${activeTab === "orders"
+                            ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white border-transparent"
                             : "bg-white/60 text-muted-foreground hover:bg-white"
                             }`}
                     >
-                        <Package className="w-4 h-4 inline mr-2" />
+                        <Package className="w-4 h-4 mr-2" />
                         My Orders ({orders.length})
                     </button>
                     <button
                         onClick={() => setActiveTab("wishlist")}
-                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeTab === "wishlist"
-                            ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                        className={`flex items-center justify-center px-4 py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all active:scale-95 shadow-sm border border-white/40 ${activeTab === "wishlist"
+                            ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white border-transparent"
                             : "bg-white/60 text-muted-foreground hover:bg-white"
                             }`}
                     >
-                        <Heart className="w-4 h-4 inline mr-2" />
+                        <Heart className="w-4 h-4 mr-2" />
                         Wishlist ({wishlistItems.length})
                     </button>
                     <button
                         onClick={() => setActiveTab("profile")}
-                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeTab === "profile"
-                            ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                        className={`flex items-center justify-center px-4 py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all active:scale-95 shadow-sm border border-white/40 ${activeTab === "profile"
+                            ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white border-transparent"
                             : "bg-white/60 text-muted-foreground hover:bg-white"
                             }`}
                     >
-                        <User className="w-4 h-4 inline mr-2" />
-                        Profile & Addresses
+                        <User className="w-4 h-4 mr-2" />
+                        Profile
                     </button>
                 </div>
 
@@ -242,24 +241,24 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                 return (
                                     <div
                                         key={order.id}
-                                        className="bg-white/60 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20 hover:shadow-lg transition-shadow"
+                                        className="bg-white/60 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20 hover:shadow-lg transition-all"
                                     >
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div>
-                                                <div className="flex items-center gap-2 flex-wrap mb-2">
-                                                    <span className="font-mono font-semibold text-lg">#{order.reference_code}</span>
+                                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
+                                            <div className="w-full sm:w-auto">
+                                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                    <span className="font-mono font-bold text-base sm:text-lg">#{order.reference_code}</span>
                                                     {order.secret_code && order.secret_code.trim() !== "" && (
-                                                        <span className="bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                                        <span className="bg-rose-500 text-[10px] text-white px-2 py-0.5 rounded-full font-bold">
                                                             ㊙️ SECRET
                                                         </span>
                                                     )}
                                                     {order.has_bundle && (
-                                                        <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                                        <span className="bg-blue-500 text-[10px] text-white px-2 py-0.5 rounded-full font-bold">
                                                             🎁 BUNDLE
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-muted-foreground">
+                                                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                                                     {new Date(order.created_at).toLocaleDateString("en-US", {
                                                         month: "long",
                                                         day: "numeric",
@@ -267,37 +266,46 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                                     })}
                                                 </p>
                                             </div>
-                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${status.color}`}>
+                                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full overflow-hidden shadow-sm ${status.color}`}>
                                                 <StatusIcon className="w-4 h-4" />
-                                                <span className="text-sm font-medium">{status.label}</span>
+                                                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">{status.label}</span>
                                             </div>
                                         </div>
 
                                         {/* Delivery Estimate */}
                                         {estimate && (
-                                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-                                                <div className="flex items-center gap-2 text-purple-800">
-                                                    <Truck className="w-4 h-4" />
-                                                    <span className="text-sm font-medium">{estimate.message}: {estimate.time}</span>
+                                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 mb-6 shadow-sm">
+                                                <div className="flex items-center gap-3 text-purple-800">
+                                                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                        <Truck className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-sm font-bold">{estimate.message}: {estimate.time}</span>
+                                                        <p className="text-[10px] text-purple-600 font-medium uppercase tracking-tight mt-0.5">
+                                                            {order.pickup_location || order.pickup_mtaani_location}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs text-purple-600 mt-1">
-                                                    {order.pickup_location || order.pickup_mtaani_location}
-                                                </p>
                                             </div>
                                         )}
 
                                         {/* Order Items */}
-                                        <div className="space-y-2 mb-4">
+                                        <div className="space-y-3 mb-6 bg-white/40 rounded-xl p-3 sm:p-0 sm:bg-transparent">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 sm:hidden px-1">Items</p>
                                             {order.items.map((item, idx) => (
-                                                <div key={idx} className="flex items-center gap-3">
-                                                    {item.image && (
-                                                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                                                <div key={idx} className="flex items-center gap-3 group">
+                                                    {item.image ? (
+                                                        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-white/60 shadow-sm transition-transform group-hover:scale-105">
                                                             <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center border border-white/60 shadow-sm">
+                                                            <Package className="w-6 h-6 text-muted-foreground/40" />
                                                         </div>
                                                     )}
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-medium text-sm truncate">{item.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
+                                                        <p className="font-bold text-sm truncate text-gray-800">{item.name}</p>
+                                                        <p className="text-xs text-muted-foreground font-medium">
                                                             Qty: {item.quantity} × KES {item.price.toLocaleString()}
                                                         </p>
                                                     </div>
@@ -305,23 +313,25 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                             ))}
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-4 border-t">
-                                            <div>
-                                                <p className="text-sm text-muted-foreground">Total</p>
-                                                <p className="text-xl font-bold">KES {order.total_amount.toLocaleString()}</p>
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-5 border-t border-white/40">
+                                            <div className="flex items-center justify-between sm:block">
+                                                <p className="text-[10px] sm:text-xs text-muted-foreground font-bold uppercase tracking-widest">Total Amount</p>
+                                                <p className="text-xl sm:text-2xl font-black bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                                                    KES {order.total_amount.toLocaleString()}
+                                                </p>
                                             </div>
                                             <Button
                                                 onClick={() => handleReorder(order.id)}
                                                 disabled={loading}
                                                 variant="outline"
-                                                className="gap-2"
+                                                className="w-full sm:w-auto gap-2 h-11 sm:h-auto rounded-xl font-bold transition-all hover:bg-white active:scale-95 shadow-sm border-white/60"
                                             >
                                                 {loading ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : (
                                                     <>
-                                                        <RefreshCcw className="w-4 h-4" />
-                                                        Reorder
+                                                        <RefreshCcw className="w-4 h-4 text-rose-500" />
+                                                        REORDER ITEMS
                                                     </>
                                                 )}
                                             </Button>
@@ -338,11 +348,11 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
 
                 {/* Wishlist Tab */}
                 {activeTab === "wishlist" && (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {loadingWishlist ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="bg-white/60 rounded-xl h-64 animate-pulse" />
+                                    <div key={i} className="bg-white/40 rounded-2xl h-64 sm:h-80 animate-pulse border border-white/20" />
                                 ))}
                             </div>
                         ) : wishlistItems.length === 0 ? (
@@ -351,77 +361,84 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                 <h3 className="text-lg font-semibold mb-2">Your wishlist is empty</h3>
                                 <p className="text-muted-foreground mb-4">Save products you love to buy them later!</p>
                                 <Link href="/shop">
-                                    <Button className="bg-gradient-to-r from-rose-500 to-pink-500">
+                                    <Button className="bg-gradient-to-r from-rose-500 to-pink-500 rounded-xl h-12 px-8 font-bold shadow-lg shadow-rose-200">
                                         Browse Products
                                     </Button>
                                 </Link>
                             </div>
                         ) : (
-                            <>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {wishlistProducts.map((product) => (
-                                        <div
-                                            key={product.id}
-                                            className="bg-white/60 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20 hover:shadow-lg transition-shadow group"
-                                        >
-                                            <Link href={`/product/${product.slug}`}>
-                                                <div className="relative aspect-square bg-muted">
-                                                    {product.images[0] && (
-                                                        <Image
-                                                            src={product.images[0]}
-                                                            alt={product.name}
-                                                            fill
-                                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                        />
-                                                    )}
-                                                </div>
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                                {wishlistProducts.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className="bg-white/60 backdrop-blur-lg rounded-2xl overflow-hidden border border-white/20 hover:shadow-xl transition-all group flex flex-col"
+                                    >
+                                        <Link href={`/product/${product.slug}`} className="block relative aspect-[4/5] bg-muted overflow-hidden">
+                                            {product.images[0] && (
+                                                <Image
+                                                    src={product.images[0]}
+                                                    alt={product.name}
+                                                    fill
+                                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                            )}
+                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent h-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </Link>
+                                        <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                                            <Link href={`/product/${product.slug}`} className="block mb-2 flex-1">
+                                                <h3 className="font-bold text-xs sm:text-base line-clamp-2 hover:text-rose-600 transition-colors leading-tight">
+                                                    {product.name}
+                                                </h3>
                                             </Link>
-                                            <div className="p-3">
-                                                <Link href={`/product/${product.slug}`}>
-                                                    <h3 className="font-semibold text-sm mb-1 line-clamp-2 hover:text-primary transition-colors">
-                                                        {product.name}
-                                                    </h3>
-                                                </Link>
-                                                <p className="text-lg font-bold mb-2">KES {product.price.toLocaleString()}</p>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        onClick={() => handleAddToCartFromWishlist(product)}
-                                                        size="sm"
-                                                        className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 h-9"
-                                                    >
-                                                        <ShoppingBag className="w-4 h-4 mr-1" />
-                                                        Add to Cart
-                                                    </Button>
-                                                    <Button
-                                                        onClick={() => handleRemoveFromWishlist(product.id)}
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-9"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
+                                            <div className="mb-4">
+                                                <p className="text-sm sm:text-xl font-black bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                                                    KES {product.price.toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    onClick={() => handleAddToCartFromWishlist(product)}
+                                                    size="sm"
+                                                    className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 h-9 sm:h-11 rounded-xl font-bold shadow-sm active:scale-95 text-[10px] sm:text-xs"
+                                                >
+                                                    <ShoppingBag className="w-3.5 h-3.5 mr-1" />
+                                                    ADD
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleRemoveFromWishlist(product.id)}
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-9 sm:h-11 w-9 sm:w-11 rounded-xl p-0 border-white/60 hover:bg-white active:scale-95 text-muted-foreground hover:text-red-500"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}
 
                 {/* Profile Tab */}
                 {activeTab === "profile" && (
-                    <div className="max-w-2xl">
-                        <div className="bg-white/60 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold">Profile Information</h2>
+                    <div className="max-w-2xl mx-auto space-y-8">
+                        <div className="bg-white/60 backdrop-blur-lg rounded-3xl p-6 sm:p-8 border border-white/20 shadow-xl">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                                        Profile Details
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest mt-1">Personal Info</p>
+                                </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setEditingProfile(!editingProfile)}
+                                    className="rounded-xl border-white/60 shadow-sm bg-white/40 font-bold"
                                 >
-                                    {editingProfile ? "Cancel" : "Edit"}
+                                    {editingProfile ? "Cancel" : "Edit Info"}
                                 </Button>
                             </div>
 
@@ -434,50 +451,50 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                             router.refresh()
                                         }
                                     }}
-                                    className="space-y-4"
+                                    className="space-y-6"
                                 >
-                                    <div>
-                                        <Label htmlFor="name">Full Name</Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
                                         <Input
                                             id="name"
                                             name="name"
                                             defaultValue={customer.name || ""}
                                             required
-                                            className="mt-2"
+                                            className="h-12 rounded-xl bg-white/40 border-white/60 shadow-sm focus:ring-rose-500"
                                         />
                                     </div>
-                                    <div>
-                                        <Label htmlFor="phone">Phone Number</Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Phone Number</Label>
                                         <Input
                                             id="phone"
                                             name="phone"
                                             type="tel"
                                             defaultValue={customer.phone_number || ""}
                                             required
-                                            className="mt-2"
+                                            className="h-12 rounded-xl bg-white/40 border-white/60 shadow-sm focus:ring-rose-500"
                                         />
                                     </div>
-                                    <Button type="submit" className="bg-gradient-to-r from-rose-500 to-pink-500">
-                                        Save Changes
+                                    <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 font-bold shadow-lg shadow-rose-100 transition-all active:scale-95">
+                                        SAVE CHANGES
                                     </Button>
                                 </form>
                             ) : (
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Name</p>
-                                        <p className="font-medium">{customer.name || "Not set"}</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Full Name</p>
+                                        <p className="font-bold text-gray-800 text-base">{customer.name || "Not set"}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Email</p>
-                                        <p className="font-medium">{customer.email}</p>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Email Address</p>
+                                        <p className="font-bold text-gray-800 text-base truncate">{customer.email}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Phone</p>
-                                        <p className="font-medium">{customer.phone_number || "Not set"}</p>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Phone Number</p>
+                                        <p className="font-bold text-gray-800 text-base">{customer.phone_number || "Not set"}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Member Since</p>
-                                        <p className="font-medium">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Member Since</p>
+                                        <p className="font-bold text-gray-800 text-base">
                                             {new Date(customer.created_at).toLocaleDateString("en-US", {
                                                 month: "long",
                                                 year: "numeric",
@@ -487,26 +504,40 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                 </div>
                             )}
                         </div>
-                        {/* Addresses Tab */}
-                        {activeTab === "profile" && (
-                            <div className="max-w-2xl space-y-4">
+
+                        {/* Addresses Section */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between px-2">
+                                <h3 className="text-xl font-black bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                                    Saved Addresses
+                                </h3>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-white/60 px-3 py-1 rounded-full border border-white/20">
+                                    {addresses.length} SAVED
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
                                 {addresses.map((address) => (
                                     <div
                                         key={address.id}
-                                        className="bg-white/60 backdrop-blur-lg rounded-2xl p-4 border border-white/20 flex items-start justify-between"
+                                        className="bg-white/60 backdrop-blur-lg rounded-2xl p-4 sm:p-5 border border-white/40 flex items-center justify-between group hover:shadow-lg transition-all"
                                     >
-                                        <div className="flex items-start gap-3">
-                                            <MapPin className="w-5 h-5 text-primary mt-0.5" />
-                                            <div>
-                                                <p className="font-medium">{address.location}</p>
-                                                {address.phone_number && (
-                                                    <p className="text-sm text-muted-foreground">{address.phone_number}</p>
-                                                )}
-                                                {address.is_default && (
-                                                    <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                                                        Default
-                                                    </span>
-                                                )}
+                                        <div className="flex items-start gap-4 flex-1 min-w-0">
+                                            <div className="p-3 bg-rose-50 rounded-xl group-hover:bg-rose-100 transition-colors">
+                                                <MapPin className="w-5 h-5 text-rose-500" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-800 truncate">{address.location}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {address.phone_number && (
+                                                        <p className="text-xs text-muted-foreground font-medium">{address.phone_number}</p>
+                                                    )}
+                                                    {address.is_default && (
+                                                        <span className="text-[9px] bg-green-100 text-green-700 font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-green-200">
+                                                            DEFAULT
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <Button
@@ -516,11 +547,21 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                                 await deleteCustomerAddress(address.id)
                                                 router.refresh()
                                             }}
+                                            className="h-10 w-10 p-0 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 ))}
+                            </div>
+
+                            <div className="bg-white/40 backdrop-blur-lg rounded-3xl p-6 border border-white/40 space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center shadow-lg shadow-rose-100">
+                                        <Plus className="w-4 h-4 text-white" />
+                                    </div>
+                                    <h3 className="font-black text-gray-800">Add New Address</h3>
+                                </div>
 
                                 <form
                                     action={async (formData) => {
@@ -529,79 +570,89 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                             router.refresh()
                                         }
                                     }}
-                                    className="bg-white/40 rounded-xl p-4 border border-white/20 space-y-4"
+                                    className="space-y-5"
                                 >
-                                    <h3 className="font-semibold">Add New Address</h3>
-                                    <div>
-                                        <Label htmlFor="location">Delivery Location</Label>
-                                        <Input
-                                            id="location"
-                                            name="location"
-                                            placeholder="e.g., Westlands, Nairobi"
-                                            required
-                                            className="mt-2"
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="location" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Delivery Location</Label>
+                                            <Input
+                                                id="location"
+                                                name="location"
+                                                placeholder="e.g. Westlands, Nairobi"
+                                                required
+                                                className="h-12 rounded-xl bg-white/40 border-white/60 shadow-sm focus:ring-rose-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Alternative Phone</Label>
+                                            <Input
+                                                id="phone"
+                                                name="phone"
+                                                type="tel"
+                                                placeholder="0712345678"
+                                                required
+                                                className="h-12 rounded-xl bg-white/40 border-white/60 shadow-sm focus:ring-rose-500"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <Label htmlFor="phone">Phone Number</Label>
-                                        <Input
-                                            id="phone"
-                                            name="phone"
-                                            type="tel"
-                                            placeholder="0712345678"
-                                            required
-                                            className="mt-2"
+
+                                    <div className="flex items-center gap-3 px-1">
+                                        <input
+                                            type="checkbox"
+                                            id="isDefault"
+                                            name="isDefault"
+                                            className="w-5 h-5 rounded-md border-white/60 bg-white/40 text-rose-500 focus:ring-rose-500 cursor-pointer"
                                         />
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <input type="checkbox" id="isDefault" name="isDefault" className="rounded" />
-                                        <Label htmlFor="isDefault" className="cursor-pointer">
-                                            Set as default address
+                                        <Label htmlFor="isDefault" className="text-sm font-bold text-gray-600 cursor-pointer">
+                                            Set as my primary delivery address
                                         </Label>
                                     </div>
-                                    <Button type="submit" className="bg-gradient-to-r from-rose-500 to-pink-500">
-                                        Save Address
+
+                                    <Button type="submit" className="w-full h-12 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 text-white font-bold shadow-lg transition-all active:scale-95 group">
+                                        ADD DELIVERY ADDRESS
+                                        <Plus className="w-4 h-4 ml-2 group-hover:rotate-90 transition-transform" />
                                     </Button>
                                 </form>
+                            </div>
 
-                                {/* Delete Account */}
-                                <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-                                    <div className="flex items-start gap-3 mb-4">
-                                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <h3 className="font-semibold text-red-900 mb-1">Delete Account</h3>
-                                            <p className="text-sm text-red-800">
-                                                This will permanently delete your account and all associated data. This action cannot be undone.
-                                            </p>
-                                        </div>
-                                    </div>
+                            {/* Danger Zone */}
+                            <div className="bg-red-50/50 backdrop-blur-sm border border-red-100 rounded-3xl p-6 sm:p-8 mt-12 flex flex-col sm:flex-row items-center gap-6">
+                                <div className="p-4 bg-red-100 rounded-2xl flex-shrink-0">
+                                    <AlertCircle className="w-8 h-8 text-red-600" />
+                                </div>
+                                <div className="flex-1 text-center sm:text-left">
+                                    <h3 className="text-lg font-black text-red-900 mb-1 uppercase tracking-tight">Danger Zone</h3>
+                                    <p className="text-sm text-red-800/80 font-medium">
+                                        Deleting your account is permanent and cannot be undone. All your orders and data will be erased.
+                                    </p>
+                                </div>
+                                <div className="w-full sm:w-auto">
                                     {deleteConfirm ? (
-                                        <div className="space-y-2">
-                                            <p className="text-sm font-medium text-red-900">Are you absolutely sure?</p>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="destructive"
-                                                    onClick={handleDeleteAccount}
-                                                    disabled={loading}
-                                                >
-                                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Yes, Delete My Account"}
-                                                </Button>
-                                                <Button variant="outline" onClick={() => setDeleteConfirm(false)}>
-                                                    Cancel
-                                                </Button>
-                                            </div>
+                                        <div className="flex flex-col gap-2">
+                                            <Button
+                                                variant="destructive"
+                                                onClick={handleDeleteAccount}
+                                                disabled={loading}
+                                                className="rounded-xl font-bold h-12 px-6 animate-pulse"
+                                            >
+                                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "YES, DELETE PERMANENTLY"}
+                                            </Button>
+                                            <Button variant="outline" onClick={() => setDeleteConfirm(false)} className="rounded-xl font-bold border-red-200">
+                                                Cancel
+                                            </Button>
                                         </div>
                                     ) : (
-                                        <Button variant="destructive" onClick={() => setDeleteConfirm(true)}>
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Delete Account
+                                        <Button
+                                            variant="destructive"
+                                            onClick={() => setDeleteConfirm(true)}
+                                            className="w-full sm:w-auto h-12 rounded-xl font-bold px-8 shadow-lg shadow-red-100 transition-all active:scale-95"
+                                        >
+                                            DELETE ACCOUNT
                                         </Button>
                                     )}
                                 </div>
                             </div>
-                        )}
-
-
+                        </div>
                     </div>
                 )}
             </div>

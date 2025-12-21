@@ -258,19 +258,19 @@ export function BundlesManager({
 
               <div>
                 <Label className="mb-3 block">Select Products (min 2)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
                   {products.map((product) => (
                     <button
                       key={product.id}
                       type="button"
                       onClick={() => toggleProduct(product.id)}
-                      className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-colors ${selectedProducts.includes(product.id)
+                      className={`flex items-center gap-3 p-3 sm:p-2 rounded-lg border text-left transition-all active:scale-[0.98] ${selectedProducts.includes(product.id)
                         ? "border-primary bg-primary/10"
                         : "border-border hover:border-primary/50"
                         }`}
                     >
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedProducts.includes(product.id)
+                        className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${selectedProducts.includes(product.id)
                           ? "border-primary bg-primary"
                           : "border-muted-foreground"
                           }`}
@@ -293,9 +293,9 @@ export function BundlesManager({
                     <span className="line-through font-medium">KES {originalPrice.toLocaleString()}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="discount">Discount Amount (KES)</Label>
+                      <Label htmlFor="discount">Discount (KES)</Label>
                       <Input
                         id="discount"
                         type="number"
@@ -336,22 +336,23 @@ export function BundlesManager({
                   </div>
 
                   {bundlePrice && Number(bundlePrice) > 0 && (
-                    <div className="flex justify-between text-sm font-medium text-green-600 bg-green-50 p-2 rounded">
+                    <div className="flex justify-between items-center text-sm font-medium text-green-600 bg-green-50 p-2.5 rounded-md border border-green-100">
                       <span>Customer Saves:</span>
-                      <span>KES {savings.toLocaleString()} ({savingsPercent}%)</span>
+                      <span className="text-right">KES {savings.toLocaleString()} ({savingsPercent}%)</span>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button
                   onClick={handleCreate}
                   disabled={!bundleName || selectedProducts.length < 2 || !bundlePrice || isSubmitting}
+                  className="w-full sm:flex-1 h-11"
                 >
                   {isSubmitting ? "Saving..." : editingBundle ? "Update Bundle" : "Create Bundle"}
                 </Button>
-                <Button variant="outline" onClick={() => { setShowForm(false); resetForm(); }}>
+                <Button variant="outline" onClick={() => { setShowForm(false); resetForm(); }} className="w-full sm:flex-none h-11">
                   Cancel
                 </Button>
               </div>
@@ -373,43 +374,60 @@ export function BundlesManager({
             <motion.div
               key={bundle.id}
               layout
-              className="bg-card border border-border rounded-xl p-4 flex items-center gap-4"
+              className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-sm transition-shadow"
             >
-              {/* Bundle Image Thumbnail */}
-              {bundle.bundle_image && (
-                <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                  <Image
-                    src={bundle.bundle_image}
-                    alt={bundle.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-4 w-full sm:w-auto">
+                {/* Bundle Image Thumbnail */}
+                {bundle.bundle_image && (
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border shadow-sm">
+                    <Image
+                      src={bundle.bundle_image}
+                      alt={bundle.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
 
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold">{bundle.name}</h3>
-                  {!bundle.is_active && (
-                    <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">Inactive</span>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">{bundle.description}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="line-through text-muted-foreground">
-                    KES {bundle.original_price.toLocaleString()}
-                  </span>
-                  <span className="font-semibold text-primary">KES {bundle.bundle_price.toLocaleString()}</span>
-                  <span className="text-green-600 font-medium">Save KES {bundle.savings.toLocaleString()}</span>
+                <div className="flex-1 min-w-0 sm:hidden">
+                  <div className="flex items-center flex-wrap gap-2">
+                    <h3 className="font-semibold truncate">@{bundle.name}</h3>
+                    {!bundle.is_active && (
+                      <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded border">Inactive</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(bundle)}>
-                  <Edit2 className="w-4 h-4 text-blue-600" />
-                </Button>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor={`active-${bundle.id}`} className="text-sm text-muted-foreground">
+              <div className="flex-1 min-w-0">
+                <div className="hidden sm:flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold">{bundle.name}</h3>
+                  {!bundle.is_active && (
+                    <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded border">Inactive</span>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground mb-3 sm:mb-2 line-clamp-2">{bundle.description}</p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm bg-muted/40 p-2 rounded-lg border border-border sm:bg-transparent sm:p-0 sm:border-0">
+                  <span className="line-through text-muted-foreground italic">
+                    KES {bundle.original_price.toLocaleString()}
+                  </span>
+                  <span className="font-bold text-primary">KES {bundle.bundle_price.toLocaleString()}</span>
+                  <span className="text-green-600 font-semibold bg-green-50 px-1.5 py-0.5 rounded text-[10px] sm:text-xs">Save KES {bundle.savings.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between sm:justify-start gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(bundle)} className="h-9 w-9 border border-border hover:bg-muted">
+                    <Edit2 className="w-4 h-4 text-blue-600" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(bundle.id)} className="h-9 w-9 border border-border hover:bg-red-50">
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg border border-border sm:bg-transparent sm:px-0 sm:py-0 sm:border-0">
+                  <Label htmlFor={`active-${bundle.id}`} className="text-xs font-medium text-muted-foreground cursor-pointer">
                     Active
                   </Label>
                   <Switch
@@ -418,9 +436,6 @@ export function BundlesManager({
                     onCheckedChange={() => handleToggleStatus(bundle.id, bundle.is_active)}
                   />
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(bundle.id)}>
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </Button>
               </div>
             </motion.div>
           ))

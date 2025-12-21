@@ -336,13 +336,13 @@ export function CategoriesManager({ categories: initialCategories }: { categorie
                     <h1 className="text-2xl font-bold">Categories</h1>
                     <p className="text-muted-foreground">{categories.length} categories</p>
                 </div>
-                <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
+                <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
                     <Plus className="w-4 h-4 mr-2" /> Add Category
                 </Button>
             </div>
 
             <div className="flex items-center gap-4 mb-6 bg-card p-2 rounded-lg border border-border">
-                <Search className="w-4 h-4 text-muted-foreground" />
+                <Search className="w-4 h-4 text-muted-foreground ml-2" />
                 <Input
                     className="border-none shadow-none focus-visible:ring-0"
                     placeholder="Search categories..."
@@ -351,54 +351,79 @@ export function CategoriesManager({ categories: initialCategories }: { categorie
                 />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
                 {filteredCategories.map(category => (
                     <div
                         key={category.id}
-                        className={`bg-card border rounded-xl p-4 transition-all hover:shadow-md ${!category.is_active ? 'opacity-60' : ''}`}
+                        className={`bg-card border rounded-xl p-4 transition-all hover:shadow-md ${!category.is_active ? 'opacity-60 bg-muted/40' : ''}`}
                     >
-                        <div className="flex items-center gap-4">
-                            <GripVertical className="w-5 h-5 text-muted-foreground cursor-move" />
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="flex items-center gap-4 w-full sm:w-auto">
+                                <GripVertical className="hidden sm:block w-5 h-5 text-muted-foreground cursor-move" />
 
-                            {/* Category Image Thumbnail */}
-                            {category.image && (
-                                <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border flex-shrink-0">
-                                    <Image
-                                        src={category.image}
-                                        alt={category.name}
-                                        fill
-                                        className="object-cover"
-                                    />
+                                {/* Category Image Thumbnail */}
+                                {category.image && (
+                                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-border flex-shrink-0 shadow-sm bg-muted">
+                                        <Image
+                                            src={category.image}
+                                            alt={category.name}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-w-0 sm:hidden">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold truncate">{category.name}</h3>
+                                        {!category.is_active && (
+                                            <span className="text-[10px] bg-muted/80 px-1.5 py-0.5 rounded border border-border">Inactive</span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">/{category.slug}</p>
                                 </div>
-                            )}
+                            </div>
 
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0 hidden sm:block">
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-semibold">{category.name}</h3>
                                     {!category.is_active && (
-                                        <span className="text-xs bg-muted px-2 py-0.5 rounded">Inactive</span>
+                                        <span className="text-[10px] bg-muted px-2 py-0.5 rounded border border-border">Inactive</span>
                                     )}
                                 </div>
                                 <p className="text-sm text-muted-foreground">/{category.slug}</p>
-                                {category.description && (
-                                    <p className="text-sm text-muted-foreground mt-1">{category.description}</p>
-                                )}
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEdit(category)}>
-                                    <Pencil className="w-3 h-3 mr-2" /> Edit
-                                </Button>
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => openDeleteModal(category.id, category.name)}
-                                >
-                                    <Trash2 className="w-3 h-3" />
-                                </Button>
+                            <div className="w-full sm:w-auto flex flex-col gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
+                                {category.description && (
+                                    <p className="text-sm text-muted-foreground mb-2 sm:hidden line-clamp-2">{category.description}</p>
+                                )}
+                                <div className="flex items-center justify-between sm:justify-end gap-2">
+                                    <div className="sm:hidden flex items-center gap-1 text-muted-foreground">
+                                        <GripVertical className="w-4 h-4" />
+                                        <span className="text-xs">Drag</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => handleEdit(category)} className="h-9 px-3">
+                                            <Pencil className="w-3 h-3 mr-2" /> Edit
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="h-9 w-9"
+                                            onClick={() => openDeleteModal(category.id, category.name)}
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        {category.description && (
+                            <p className="hidden sm:block text-sm text-muted-foreground mt-3 pt-3 border-t border-border/40">
+                                {category.description}
+                            </p>
+                        )}
                     </div>
                 ))}
             </div>
