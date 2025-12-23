@@ -137,7 +137,7 @@ export function Header() {
                 </AnimatePresence>
               </>
             ) : (
-              <Link href="/login" className="p-2.5 hover:bg-rose-50 rounded-full transition-colors group">
+              <Link href="/login" className="p-2.5 rounded-full transition-colors group">
                 <UserCircle className="h-5 w-5 text-gray-700 group-hover:text-rose-600 transition-colors" />
               </Link>
             )}
