@@ -64,7 +64,7 @@ export function ProductCard({ product }: { product: ProductWithStock }) {
             <Button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="bg-white text-black hover:bg-white/90"
+              className="bg-white text-black hover:bg-gradient-to-r hover:from-rose-500 hover:to-pink-500 hover:text-white transition-all duration-300"
               size="lg"
             >
               <ShoppingBag className="mr-2 h-5 w-5" />

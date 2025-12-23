@@ -10,7 +10,7 @@ export async function POST(request: Request) {
         }
 
         // Fetch products by IDs
-        const products = await sql<Product[]>`
+        const products = await sql`
       SELECT * FROM products 
       WHERE id = ANY(${productIds}) 
       AND is_active = true

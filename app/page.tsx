@@ -98,6 +98,7 @@ const fallbackTestimonials: Testimonial[] = [
     profile_image: "/african-woman-avatar.jpg",
     emoji_reactions: "💕",
     is_active: true,
+    is_approved: true,
     created_at: new Date().toISOString(),
   },
   {
@@ -107,6 +108,7 @@ const fallbackTestimonials: Testimonial[] = [
     profile_image: "/young-woman-avatar.png",
     emoji_reactions: "🚀",
     is_active: true,
+    is_approved: true,
     created_at: new Date().toISOString(),
   },
   {
@@ -116,6 +118,7 @@ const fallbackTestimonials: Testimonial[] = [
     profile_image: "/smiling-woman-avatar.png",
     emoji_reactions: "🎁",
     is_active: true,
+    is_approved: true,
     created_at: new Date().toISOString(),
   },
 ]
