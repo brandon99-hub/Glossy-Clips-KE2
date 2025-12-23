@@ -154,3 +154,84 @@ export async function sendAbandonedCartEmail(email: string, customerName: string
     return { success: false, error: "Failed to send email" }
   }
 }
+
+export async function sendBackInStockEmail(
+  email: string,
+  productName: string,
+  productSlug: string,
+  productImage?: string
+) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://glossy-clips-ke-2.vercel.app"
+  const productUrl = `${baseUrl}/product/${productSlug}`
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || `"GLOSSYCLIPSKE" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: `🎉 ${productName} is Back in Stock!`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0; }
+            .header h1 { color: white; margin: 0; font-size: 28px; letter-spacing: -0.5px; }
+            .content { background: #ffffff; padding: 40px 30px; border-radius: 0 0 12px 12px; border: 1px solid #f1f5f9; border-top: none; }
+            .product-card { background: linear-gradient(135deg, #fef2f2 0%, #fce7f3 100%); border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center; border: 2px solid #fecdd3; }
+            .product-image { max-width: 200px; height: 200px; object-fit: cover; border-radius: 12px; margin: 0 auto 16px; display: block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+            .product-name { font-size: 24px; font-weight: bold; color: #be123c; margin: 16px 0; }
+            .button { display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%); color: white !important; text-decoration: none; border-radius: 12px; font-weight: bold; margin: 24px 0; box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.3); font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .button:hover { box-shadow: 0 10px 15px -3px rgba(244, 63, 94, 0.4); }
+            .urgency { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px; }
+            .urgency-text { color: #92400e; font-weight: 600; margin: 0; }
+            .footer { text-align: center; margin-top: 30px; font-size: 13px; color: #94a3b8; }
+            .heart { color: #f43f5e; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>✨ GLOSSYCLIPSKE</h1>
+            </div>
+            <div class="content">
+              <p style="font-size: 18px; color: #1e293b; font-weight: bold; margin-bottom: 8px;">Great news!</p>
+              <p style="font-size: 16px; color: #475569;">The item you've been waiting for is finally back in stock! <span class="heart">♥</span></p>
+              
+              <div class="product-card">
+                ${productImage ? `<img src="${productImage}" alt="${productName}" class="product-image" />` : ''}
+                <p class="product-name">${productName}</p>
+                <p style="color: #64748b; font-size: 14px; margin: 0;">Now available for purchase!</p>
+              </div>
+
+              <div class="urgency">
+                <p class="urgency-text">⚡ Hurry! Popular items sell out fast. Grab yours before it's gone again!</p>
+              </div>
+              
+              <p style="text-align: center;">
+                <a href="${productUrl}" class="button">Shop Now</a>
+              </p>
+
+              <p style="font-size: 14px; color: #64748b; text-align: center; margin-top: 32px;">
+                You're receiving this because you joined the waitlist for this product.<br/>
+                Questions? Reply to this email or message us on WhatsApp!
+              </p>
+            </div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} GLOSSYCLIPSKE. Based in Kenya 🇰🇪</p>
+              <p>Stay Glossy! ✨</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    return { success: true }
+  } catch (error) {
+    console.error("Error sending back-in-stock email:", error)
+    return { success: false, error: "Failed to send email" }
+  }
+}

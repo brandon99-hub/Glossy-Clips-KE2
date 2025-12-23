@@ -3,6 +3,7 @@
 import { sql } from "@/lib/db"
 import { auth } from "@/lib/auth-helper"
 import { revalidatePath } from "next/cache"
+import { sendBackInStockEmail } from "@/lib/email"
 
 export async function joinWaitlist(productId: number, email?: string) {
     try {
@@ -67,11 +68,38 @@ export async function joinWaitlist(productId: number, email?: string) {
 
 export async function notifyWaitlist(productId: number) {
     try {
+        // Get product details
+        const products = await sql`
+      SELECT * FROM products WHERE id = ${productId}
+    `
+
+        if (products.length === 0) {
+            return { success: false, error: "Product not found" }
+        }
+
+        const product = products[0] as any
+
         // Get all waitlist entries for this product
         const waitlist = await sql`
       SELECT * FROM product_waitlists
       WHERE product_id = ${productId} AND notified = false
     `
+
+        if (waitlist.length === 0) {
+            return { success: true, emails: [], count: 0, message: "No customers on waitlist" }
+        }
+
+        // Send emails to all customers
+        const emailResults = []
+        for (const entry of waitlist) {
+            const result = await sendBackInStockEmail(
+                entry.email,
+                product.name,
+                product.slug,
+                product.images?.[0]
+            )
+            emailResults.push({ email: entry.email, success: result.success })
+        }
 
         // Mark as notified
         await sql`
@@ -80,11 +108,16 @@ export async function notifyWaitlist(productId: number) {
       WHERE product_id = ${productId}
     `
 
-        // Return emails to notify (you'll need to implement email sending)
+        const successCount = emailResults.filter(r => r.success).length
+        const failedCount = emailResults.length - successCount
+
         return {
             success: true,
             emails: waitlist.map((w: any) => w.email),
-            count: waitlist.length
+            count: waitlist.length,
+            successCount,
+            failedCount,
+            message: `Notified ${successCount} customers${failedCount > 0 ? ` (${failedCount} failed)` : ''}`
         }
     } catch (error) {
         console.error("Notify waitlist error:", error)

@@ -80,6 +80,12 @@ export async function updateProduct(formData: FormData) {
         const validatedData = productSchema.parse(rawData)
         const imagesArray = `{${validatedData.images.map(img => `"${img}"`).join(",")}}`
 
+        // Get current stock before update
+        const currentProduct = await sql`
+      SELECT stock_quantity FROM products WHERE id = ${Number(id)}
+    `
+        const previousStock = currentProduct[0]?.stock_quantity || 0
+
         await sql`
         UPDATE products 
         SET 
@@ -94,7 +100,16 @@ export async function updateProduct(formData: FormData) {
         WHERE id = ${Number(id)}
       `
 
+        // Automatic waitlist notification: if stock went from 0 to >0, notify waitlist
+        if (previousStock === 0 && validatedData.stock_quantity > 0) {
+            // Import and call notifyWaitlist
+            const { notifyWaitlist } = await import("@/app/api/waitlist/actions")
+            await notifyWaitlist(Number(id))
+            console.log(`Auto-notified waitlist for product ${id} - stock restored`)
+        }
+
         revalidatePath("/admin/products")
+        revalidatePath("/admin/waitlist")
         return { success: true }
     } catch (error) {
         console.error("Failed to update product:", error)

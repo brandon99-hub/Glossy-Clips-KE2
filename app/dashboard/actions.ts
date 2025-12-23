@@ -265,3 +265,53 @@ export async function deleteCustomerAccount() {
         return { success: false, error: "Failed to delete account" }
     }
 }
+
+export async function getCustomerWaitlist() {
+    const session = await auth()
+    if (!session?.user?.id) {
+        return { success: false, error: "Not authenticated" }
+    }
+
+    try {
+        const waitlistItems = await sql`
+      SELECT 
+        pw.*,
+        p.id as product_id,
+        p.name,
+        p.slug,
+        p.price,
+        p.images,
+        p.stock_quantity,
+        p.is_active
+      FROM product_waitlists pw
+      JOIN products p ON p.id = pw.product_id
+      WHERE pw.customer_id = ${parseInt(session.user.id)}
+      ORDER BY pw.created_at DESC
+    `
+
+        return { success: true, waitlistItems }
+    } catch (error) {
+        console.error("Error fetching waitlist:", error)
+        return { success: false, error: "Failed to fetch waitlist" }
+    }
+}
+
+export async function removeFromWaitlist(productId: number) {
+    const session = await auth()
+    if (!session?.user?.id) {
+        return { success: false, error: "Not authenticated" }
+    }
+
+    try {
+        await sql`
+      DELETE FROM product_waitlists
+      WHERE product_id = ${productId} AND customer_id = ${parseInt(session.user.id)}
+    `
+
+        revalidatePath("/dashboard")
+        return { success: true }
+    } catch (error) {
+        console.error("Error removing from waitlist:", error)
+        return { success: false, error: "Failed to remove from waitlist" }
+    }
+}

@@ -2,16 +2,18 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings, Layers } from "lucide-react"
+import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings, Layers, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { adminLogout } from "@/app/admin/login/actions"
+import { getTotalWaitlistCount } from "@/app/admin/waitlist/actions"
 
 const navItems = [
   { href: "/admin/orders", icon: Package, label: "Orders" },
   { href: "/admin/products", icon: Tag, label: "Products" },
   { href: "/admin/categories", icon: Layers, label: "Categories" },
   { href: "/admin/bundles", icon: PackageOpen, label: "Bundles" },
+  { href: "/admin/waitlist", icon: Bell, label: "Waitlist", hasBadge: true },
   { href: "/admin/testimonials", icon: MessageSquare, label: "Testimonials" },
   { href: "/admin/qr-codes", icon: QrCode, label: "QR Codes" },
   { href: "/admin/secret-page-link", icon: Sparkles, label: "Secret Page", isExternal: true },
@@ -21,6 +23,12 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [waitlistCount, setWaitlistCount] = useState(0)
+
+  // Fetch waitlist count
+  useEffect(() => {
+    getTotalWaitlistCount().then(count => setWaitlistCount(count))
+  }, [])
 
   // Lock body scroll when mobile sidebar is open
   useEffect(() => {
@@ -75,13 +83,14 @@ export function AdminSidebar() {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const showBadge = item.hasBadge && waitlistCount > 0
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors relative",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -89,6 +98,11 @@ export function AdminSidebar() {
               >
                 <Icon className="w-5 h-5" />
                 {item.label}
+                {showBadge && (
+                  <span className="ml-auto bg-rose-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {waitlistCount > 9 ? "9+" : waitlistCount}
+                  </span>
+                )}
               </Link>
             )
           })}

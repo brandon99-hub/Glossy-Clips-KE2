@@ -8,6 +8,11 @@ import { cn } from "@/lib/utils"
 export function MobileNav() {
   const pathname = usePathname()
 
+  // Hide on dashboard page
+  if (pathname === "/dashboard") {
+    return null
+  }
+
   const links = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/shop", icon: Grid3X3, label: "Shop" },
