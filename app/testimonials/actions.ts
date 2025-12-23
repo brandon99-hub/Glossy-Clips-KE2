@@ -35,13 +35,19 @@ export async function submitTestimonial(formData: FormData) {
         const customer = customers[0]
         const username = customer.name || customer.email.split('@')[0]
 
-        // Use default profile image (or could use customer's initials)
-        const imageUrl = "/placeholder.svg?height=60&width=60"
+        // Randomly select from available avatar images
+        const avatarImages = [
+            "/african-woman-avatar.jpg",
+            "/young-woman-avatar.png",
+            "/smiling-woman-avatar.png",
+            "/my pic.jpg"
+        ]
+        const randomAvatar = avatarImages[Math.floor(Math.random() * avatarImages.length)]
 
         // Insert testimonial - AUTO-APPROVED for verified customers
         await sql`
-      INSERT INTO testimonials (username, profile_image, message, is_active, is_approved)
-      VALUES (${username}, ${imageUrl}, ${message}, true, true)
+      INSERT INTO testimonials (username, profile_image, message, is_active, is_approved, customer_id)
+      VALUES (${username}, ${randomAvatar}, ${message}, true, true, ${parseInt(session.user.id)})
     `
 
         revalidatePath("/testimonials")

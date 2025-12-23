@@ -164,9 +164,9 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
       {/* Testimonials list */}
       <div className="space-y-4">
         {testimonials.map((t) => (
-          <div key={t.id} className="bg-card border border-border rounded-xl p-4">
-            <div className="flex flex-col sm:flex-row items-start gap-4">
-              <div className="flex items-start gap-3 w-full">
+          <div key={t.id} className="bg-card border border-border rounded-xl p-4 overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-start gap-4">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
                 <div className="flex-shrink-0">
                   <Image
                     src={t.profile_image || "/pfp.jpg"}
@@ -183,20 +183,20 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
                       {t.is_approved ? '✓ Approved' : '⏳ Pending'}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{t.message}</p>
+                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">{t.message}</p>
                   {t.emoji_reactions && (
                     <p className="text-xs text-muted-foreground mt-2 bg-muted/50 p-1.5 rounded inline-block">Reactions: {t.emoji_reactions}</p>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-row sm:flex-col items-center sm:items-stretch gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
+              <div className="flex flex-row lg:flex-col items-center lg:items-stretch gap-2 w-full lg:w-auto shrink-0">
                 <button
                   onClick={async () => {
                     await toggleApproval(t.id, t.is_approved)
                     router.refresh()
                   }}
-                  className={`flex-1 sm:w-24 px-3 py-2 text-xs font-medium rounded-md transition-colors text-center ${t.is_approved ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                  className={`flex-1 lg:w-24 px-3 py-2 text-xs font-medium rounded-md transition-colors text-center ${t.is_approved ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
                 >
                   {t.is_approved ? 'Unapprove' : 'Approve'}
                 </button>
@@ -204,7 +204,7 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
                   <button
                     onClick={() => handleEdit(t)}
                     disabled={deleting === t.id}
-                    className="flex-1 sm:flex-none p-2 rounded-md border border-border text-muted-foreground hover:text-primary hover:bg-muted transition-colors flex justify-center items-center h-9 w-9 sm:w-full"
+                    className="p-2 rounded-md border border-border text-muted-foreground hover:text-primary hover:bg-muted transition-colors flex justify-center items-center h-9 w-9"
                     title="Edit"
                   >
                     <Pencil className="w-4 h-4" />
@@ -212,7 +212,7 @@ export function TestimonialsManager({ testimonials }: { testimonials: Testimonia
                   <button
                     onClick={() => handleDelete(t.id)}
                     disabled={deleting === t.id}
-                    className="flex-1 sm:flex-none p-2 rounded-md border border-border text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors flex justify-center items-center h-9 w-9 sm:w-full"
+                    className="p-2 rounded-md border border-border text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors flex justify-center items-center h-9 w-9"
                     title="Delete"
                   >
                     {deleting === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}

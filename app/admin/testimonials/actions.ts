@@ -1,6 +1,7 @@
 "use server"
 
 import { sql } from "@/lib/db"
+import { revalidatePath } from "next/cache"
 
 export async function addTestimonial(formData: FormData) {
   const username = formData.get("username") as string
@@ -35,6 +36,8 @@ export async function addTestimonial(formData: FormData) {
 export async function deleteTestimonial(id: number) {
   try {
     await sql`DELETE FROM testimonials WHERE id = ${id}`
+    revalidatePath("/testimonials")
+    revalidatePath("/")
     return { success: true }
   } catch (error) {
     console.error("Error deleting testimonial:", error)

@@ -89,8 +89,11 @@ const TestimonialsPage = ({ testimonials }: { testimonials: Testimonial[] }) => 
                     <p className="font-semibold text-sm">@{t.username}</p>
                     {/* Only show verified badge for customer testimonials */}
                     {t.customer_id && (
-                      <span className="bg-green-100 text-green-800 text-[10px] px-2 py-0.5 rounded-full">
-                        ✓ Verified
+                      <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 font-medium shadow-sm">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Verified
                       </span>
                     )}
                   </div>
@@ -175,12 +178,20 @@ const TestimonialsPage = ({ testimonials }: { testimonials: Testimonial[] }) => 
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.5 }}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.y > 100 || velocity.y > 500) {
+                  setIsFormOpen(false)
+                }
+              }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-30 max-h-[75vh] overflow-y-auto bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/95 dark:to-amber-950/95 rounded-t-3xl shadow-2xl"
             >
               <div className="p-6">
                 {/* Drag Handle */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4 cursor-grab active:cursor-grabbing">
                   <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
                 </div>
 
@@ -216,13 +227,16 @@ const TestimonialsPage = ({ testimonials }: { testimonials: Testimonial[] }) => 
                       <h3 className="font-bold text-lg">Send Your Love</h3>
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-900 flex items-center gap-2">
+                    <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-xl p-3 mb-4">
+                      <p className="text-sm text-rose-900 flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4" />
                         Posting as <strong>{session.user.name || session.user.email}</strong>
                       </p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        ✓ Verified Customer - Your testimonial will appear immediately
+                      <p className="text-xs text-rose-700 mt-1 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Verified Customer - Your testimonial will appear immediately
                       </p>
                     </div>
 
