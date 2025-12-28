@@ -4,8 +4,6 @@
     "description": "Premium hair clips and lip gloss in Kenya - Shop the latest beauty accessories",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#f43f5e",
     "orientation": "portrait-primary",
     "icons": [
         {

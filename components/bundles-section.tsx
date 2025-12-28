@@ -70,7 +70,10 @@ export async function BundlesSection() {
 
         {/* Horizontal Scrollable Carousel */}
         <div className="relative">
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+          <div
+            data-no-swipe="true"
+            className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
+          >
             {bundles.map((bundle) => (
               <div key={bundle.id} className="flex-shrink-0 w-[85%] sm:w-[45%] snap-start">
                 <BundleCard bundle={bundle} />

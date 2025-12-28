@@ -31,12 +31,24 @@ export function SwipeNavigation({ children, currentPage }: SwipeNavigationProps)
         if (!isMobile) return
 
         const handleTouchStart = (e: TouchEvent) => {
+            // Check if touch started on a no-swipe element
+            const target = e.target as HTMLElement
+            if (target.closest('[data-no-swipe="true"]')) {
+                return
+            }
+
             touchStartX.current = e.touches[0].clientX
             touchStartY.current = e.touches[0].clientY
             isHorizontalSwipe.current = false
         }
 
         const handleTouchMove = (e: TouchEvent) => {
+            // Check if touch is on a no-swipe element
+            const target = e.target as HTMLElement
+            if (target.closest('[data-no-swipe="true"]')) {
+                return
+            }
+
             touchCurrentX.current = e.touches[0].clientX
             touchCurrentY.current = e.touches[0].clientY
 
