@@ -1,6 +1,7 @@
 import { sql, type Product } from "@/lib/db"
 import { SwipeNavigation } from "@/components/swipe-navigation"
 import { ShopClient } from "./shop-client"
+import { Suspense } from "react"
 
 const fallbackProducts: Product[] = [
   {
@@ -107,7 +108,20 @@ export default async function ShopPage() {
 
   return (
     <SwipeNavigation currentPage="shop">
-      <ShopClient initialProducts={products} maxPrice={maxPrice} />
+      <Suspense
+        fallback={
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading products...</p>
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <ShopClient initialProducts={products} maxPrice={maxPrice} />
+      </Suspense>
     </SwipeNavigation>
   )
 }
