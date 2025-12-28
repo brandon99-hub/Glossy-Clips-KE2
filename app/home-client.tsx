@@ -1,7 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { SplashScreen } from "@/components/splash-screen"
 import type { Product, Testimonial } from "@/lib/db"
 import { HeroSection } from "@/components/hero-section"
 import { CategoryGrid } from "@/components/category-grid"
@@ -27,24 +25,6 @@ interface HomeClientProps {
 }
 
 export function HomeClient({ products, testimonials, bundles, bundlesSection }: HomeClientProps) {
-    const [showSplash, setShowSplash] = useState(true)
-    const [isFirstVisit, setIsFirstVisit] = useState(false)
-
-    useEffect(() => {
-        // Check if this is the first visit
-        const hasVisited = localStorage.getItem("has_visited")
-        if (!hasVisited) {
-            setIsFirstVisit(true)
-            localStorage.setItem("has_visited", "true")
-        } else {
-            setShowSplash(false)
-        }
-    }, [])
-
-    if (showSplash && isFirstVisit) {
-        return <SplashScreen onComplete={() => setShowSplash(false)} />
-    }
-
     return (
         <SwipeNavigation currentPage="home">
             <div>

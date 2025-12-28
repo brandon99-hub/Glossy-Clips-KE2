@@ -64,6 +64,60 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${dancing.variable} font-sans antialiased`}>
+        {/* Inline loading screen - shows immediately while React loads */}
+        <div id="app-loading" style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(to bottom right, #fff1f2, #ffffff, #fffbeb)',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <img
+              src="/logo.jpeg"
+              alt="GlossyClipsKE"
+              style={{
+                width: '120px',
+                height: '120px',
+                margin: '0 auto 1.5rem',
+                borderRadius: '50%',
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+              }}
+            />
+            <h1 style={{
+              fontSize: '1.875rem',
+              fontWeight: 'bold',
+              marginBottom: '0.5rem',
+              background: 'linear-gradient(to right, #f43f5e, #ec4899, #f59e0b)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              GLOSSYCLIPSKE
+            </h1>
+          </div>
+        </div>
+
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Hide loading screen once React hydrates
+            window.addEventListener('load', function() {
+              const loader = document.getElementById('app-loading');
+              if (loader) {
+                setTimeout(function() {
+                  loader.style.opacity = '0';
+                  loader.style.transition = 'opacity 0.3s';
+                  setTimeout(function() {
+                    loader.style.display = 'none';
+                  }, 300);
+                }, 100);
+              }
+            });
+          `
+        }} />
+
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
