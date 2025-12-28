@@ -1,28 +1,27 @@
-import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Poppins, Dancing_Script } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Toaster } from "sonner"
+import "./globals.css"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { MobileNav } from "@/components/mobile-nav"
+import { WhatsAppButton } from "@/components/whatsapp-button"
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { CartProvider } from "@/lib/cart-context"
 import { WishlistProvider } from "@/lib/wishlist-context"
 import { AuthProvider } from "@/components/auth-provider"
-import { Header } from "@/components/header"
-import { MobileNav } from "@/components/mobile-nav"
-import { WhatsAppButton } from "@/components/whatsapp-button"
-import { Footer } from "@/components/footer"
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
-import "./globals.css"
+import { Toaster } from "sonner"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const poppins = Poppins({
+  weight: ["300", "400", "500", "600", "700"],
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-poppins",
 })
 
 const dancing = Dancing_Script({
-  subsets: ["latin"],
   weight: ["400", "700"],
+  subsets: ["latin"],
   variable: "--font-dancing",
 })
 
@@ -50,6 +49,10 @@ export const metadata: Metadata = {
     title: 'GLOSSYCLIPSKE | Hair Clips & Lip Gloss',
     description: 'Premium hair clips and lip gloss for the glow-up generation',
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export const viewport: Viewport = {
@@ -64,60 +67,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${dancing.variable} font-sans antialiased`}>
-        {/* Inline loading screen - shows immediately while React loads */}
-        <div id="app-loading" style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(to bottom right, #fff1f2, #ffffff, #fffbeb)',
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <img
-              src="/logo.jpeg"
-              alt="GlossyClipsKE"
-              style={{
-                width: '120px',
-                height: '120px',
-                margin: '0 auto 1.5rem',
-                borderRadius: '50%',
-                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-              }}
-            />
-            <h1 style={{
-              fontSize: '1.875rem',
-              fontWeight: 'bold',
-              marginBottom: '0.5rem',
-              background: 'linear-gradient(to right, #f43f5e, #ec4899, #f59e0b)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              GLOSSYCLIPSKE
-            </h1>
-          </div>
-        </div>
-
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            // Hide loading screen once React hydrates
-            window.addEventListener('load', function() {
-              const loader = document.getElementById('app-loading');
-              if (loader) {
-                setTimeout(function() {
-                  loader.style.opacity = '0';
-                  loader.style.transition = 'opacity 0.3s';
-                  setTimeout(function() {
-                    loader.style.display = 'none';
-                  }, 300);
-                }, 100);
-              }
-            });
-          `
-        }} />
-
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
