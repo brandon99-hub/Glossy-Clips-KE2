@@ -77,6 +77,34 @@ function CheckoutContent() {
     }
   }, [searchParams, session])
 
+  // Calculate totals first
+  const deliveryFee = selectedLocation?.delivery_fee || 0
+  const finalTotal = Number(totalAmount) + Number(deliveryFee)
+
+  // Track abandoned cart
+  useEffect(() => {
+    const saveAbandonedCart = async () => {
+      if (items.length === 0) return
+
+      try {
+        await fetch("/api/cart/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerId: session?.user?.id || null,
+            sessionId: typeof window !== 'undefined' ? localStorage.getItem('session_id') || Date.now().toString() : null,
+            cartItems: items,
+            totalAmount: finalTotal,
+          }),
+        })
+      } catch (error) {
+        console.error("Failed to save abandoned cart:", error)
+      }
+    }
+
+    saveAbandonedCart()
+  }, [items, session, finalTotal])
+
   if (items.length === 0) {
     return (
       <div className="py-16 px-4 text-center">
@@ -90,9 +118,6 @@ function CheckoutContent() {
       </div>
     )
   }
-
-  const deliveryFee = selectedLocation?.delivery_fee || 0
-  const finalTotal = Number(totalAmount) + Number(deliveryFee)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

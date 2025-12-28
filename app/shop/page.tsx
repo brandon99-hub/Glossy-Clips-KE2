@@ -1,6 +1,6 @@
-import type React from "react"
-import { sql, type Product, type Category } from "@/lib/db"
-import { ProductCard } from "@/components/product-card"
+import { sql, type Product } from "@/lib/db"
+import { SwipeNavigation } from "@/components/swipe-navigation"
+import { ShopClient } from "./shop-client"
 
 const fallbackProducts: Product[] = [
   {
@@ -83,147 +83,31 @@ const fallbackProducts: Product[] = [
   },
 ]
 
-import { SearchInput } from "@/components/search-input"
-import { SwipeNavigation } from "@/components/swipe-navigation"
-
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; search?: string }>
-}) {
-  const { category, search } = await searchParams
-
+export default async function ShopPage() {
   let products: Product[] = fallbackProducts
-  let categories: Category[] = []
-
-  // Fetch categories
-  try {
-    categories = await sql`
-      SELECT * FROM categories 
-      WHERE is_active = true 
-      ORDER BY display_order ASC
-    ` as Category[]
-  } catch (error) {
-    console.error('Error fetching categories:', error)
-  }
+  let maxPrice = 5000
 
   try {
-    if (search) {
-      // Use PostgreSQL Full-Text Search with ranking
-      // 'A' weight for name, 'B' weight for description
-      const searchTerms = search.trim().split(/\s+/).join(" & ")
-      products = await sql`
-        SELECT *, 
-          ts_rank_cd(
-            setweight(to_tsvector('english', name), 'A') || 
-            setweight(to_tsvector('english', COALESCE(description, '')), 'B'),
-            to_tsquery('english', ${searchTerms})
-          ) AS rank
-        FROM products 
-        WHERE is_active = true 
-        AND is_secret = false 
-        AND (
-          setweight(to_tsvector('english', name), 'A') || 
-          setweight(to_tsvector('english', COALESCE(description, '')), 'B')
-        ) @@ to_tsquery('english', ${searchTerms})
-        ORDER BY rank DESC, created_at DESC
-      ` as unknown as Product[]
-    } else if (category) {
-      products = await sql`
-        SELECT * FROM products 
-        WHERE is_active = true AND is_secret = false AND category = ${category}
-        ORDER BY created_at DESC
-      ` as unknown as Product[]
-    } else {
-      products = await sql`
-        SELECT * FROM products 
-        WHERE is_active = true AND is_secret = false
-        ORDER BY created_at DESC
-      ` as unknown as Product[]
+    // Fetch all active products
+    products = (await sql`
+      SELECT * FROM products 
+      WHERE is_active = true AND is_secret = false
+      ORDER BY created_at DESC
+    `) as unknown as Product[]
+
+    // Calculate max price for filter
+    if (products.length > 0) {
+      maxPrice = Math.max(...products.map((p) => p.price))
+      // Round up to nearest 100
+      maxPrice = Math.ceil(maxPrice / 100) * 100
     }
   } catch (error) {
-    // Fallback filtering
-    if (search) {
-      products = fallbackProducts.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.description.toLowerCase().includes(search.toLowerCase())
-      )
-    } else if (category) {
-      products = fallbackProducts.filter((p) => p.category === category)
-    }
+    console.error("Error fetching products:", error)
   }
-
-  // Get category name for title
-  const categoryName = categories.find(c => c.slug === category)?.name
-  const title = search ? `Search: "${search}"` : (categoryName || "All Products")
 
   return (
     <SwipeNavigation currentPage="shop">
-      <div className="py-8 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-1">{title}</h1>
-              <p className="text-muted-foreground">
-                {products.length} {products.length === 1 ? "product" : "products"}
-              </p>
-            </div>
-            <div className="w-full md:w-72">
-              <SearchInput />
-            </div>
-          </div>
-
-          {/* Dynamic Filter Tabs */}
-          {!search && categories.length > 0 && (
-            <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-              <FilterTab href="/shop" active={!category}>
-                All
-              </FilterTab>
-              {categories.map(cat => (
-                <FilterTab
-                  key={cat.id}
-                  href={`/shop?category=${cat.slug}`}
-                  active={category === cat.slug}
-                >
-                  {cat.name}
-                </FilterTab>
-              ))}
-            </div>
-          )}
-
-          {products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No products found</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <ShopClient initialProducts={products} maxPrice={maxPrice} />
     </SwipeNavigation>
-  )
-}
-
-function FilterTab({
-  href,
-  active,
-  children,
-}: {
-  href: string
-  active: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <a
-      href={href}
-      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
-        }`}
-    >
-      {children}
-    </a>
   )
 }

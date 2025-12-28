@@ -11,6 +11,7 @@ import { Header } from "@/components/header"
 import { MobileNav } from "@/components/mobile-nav"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { Footer } from "@/components/footer"
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -30,10 +31,24 @@ export const metadata: Metadata = {
   description:
     "Premium hair clips and lip gloss for the glow-up generation. Shop now and get a free gift card with every order! Based in Kenya 🇰🇪",
   generator: 'v0.app',
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
     apple: '/logo.jpeg',
+  },
+  openGraph: {
+    title: 'GLOSSYCLIPSKE | Hair Clips & Lip Gloss',
+    description: 'Premium hair clips and lip gloss for the glow-up generation',
+    url: process.env.NEXT_PUBLIC_APP_URL,
+    siteName: 'GlossyClipsKE',
+    locale: 'en_KE',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GLOSSYCLIPSKE | Hair Clips & Lip Gloss',
+    description: 'Premium hair clips and lip gloss for the glow-up generation',
   },
 }
 
@@ -57,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Footer />
               <MobileNav />
               <WhatsAppButton />
+              <PWAInstallPrompt />
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
