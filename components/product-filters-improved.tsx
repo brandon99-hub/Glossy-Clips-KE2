@@ -146,22 +146,46 @@ export function ProductFiltersImproved({ filters, onFiltersChange, maxPrice = 50
                             </Select>
                         </div>
 
-                        {/* Price Range */}
+                        {/* Price Range - Presets Only */}
                         <div className="space-y-3">
                             <Label>Price Range</Label>
-                            <div className="px-2">
-                                <Slider
-                                    min={0}
-                                    max={maxPrice}
-                                    step={50}
-                                    value={[filters.priceMin, filters.priceMax]}
-                                    onValueChange={handlePriceChange}
-                                    className="w-full"
-                                />
-                            </div>
-                            <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>KES {filters.priceMin.toLocaleString()}</span>
-                                <span>KES {filters.priceMax.toLocaleString()}</span>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => onFiltersChange({ ...filters, priceMin: 0, priceMax: maxPrice })}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.priceMin === 0 && filters.priceMax === maxPrice
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        }`}
+                                >
+                                    Any Price
+                                </button>
+                                <button
+                                    onClick={() => onFiltersChange({ ...filters, priceMin: 0, priceMax: 500 })}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.priceMin === 0 && filters.priceMax === 500
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        }`}
+                                >
+                                    Under 500
+                                </button>
+                                <button
+                                    onClick={() => onFiltersChange({ ...filters, priceMin: 500, priceMax: 1000 })}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.priceMin === 500 && filters.priceMax === 1000
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        }`}
+                                >
+                                    500 - 1,000
+                                </button>
+                                <button
+                                    onClick={() => onFiltersChange({ ...filters, priceMin: 1000, priceMax: maxPrice })}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filters.priceMin === 1000 && filters.priceMax === maxPrice
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        }`}
+                                >
+                                    Over 1,000
+                                </button>
                             </div>
                         </div>
 
