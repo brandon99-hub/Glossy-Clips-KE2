@@ -21,7 +21,8 @@ export function ShopClient({ initialProducts, maxPrice }: ShopClientProps) {
     const [filters, setFilters] = useState<FilterState>({
         priceMin: parseInt(searchParams.get("priceMin") || "0"),
         priceMax: parseInt(searchParams.get("priceMax") || maxPrice.toString()),
-        categories: searchParams.get("categories")?.split(",").filter(Boolean) || [],
+        categories: searchParams.get("categories")?.split(",").filter(Boolean) ||
+            (searchParams.get("category") ? [searchParams.get("category")!] : []),
         inStockOnly: searchParams.get("inStock") === "true",
         sortBy: searchParams.get("sort") || "newest",
     })

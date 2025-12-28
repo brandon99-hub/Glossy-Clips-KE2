@@ -1,14 +1,33 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "254741991213"
 
+const CATEGORIES = [
+  { name: "Hair Clips", slug: "hair-clip" },
+  { name: "Hair Charms", slug: "hair-charm" },
+  { name: "Lip Gloss", slug: "gloss" },
+]
+
 export function HeroSection() {
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCategoryIndex((prev) => (prev + 1) % CATEGORIES.length)
+    }, 2500) // Change every 2.5 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const currentCategory = CATEGORIES[currentCategoryIndex]
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-rose-50 via-pink-50/30 to-background py-12 sm:py-16 md:py-24">
       {/* Decorative elements */}
@@ -86,13 +105,28 @@ export function HeroSection() {
               Shop Now <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
+
+          {/* Rotating Category Button */}
           <Button
             asChild
             size="lg"
             variant="outline"
-            className="border-2 border-rose-200 hover:bg-rose-50 h-12 sm:h-11 text-base font-semibold rounded-xl"
+            className="border-2 border-rose-200 hover:bg-rose-50 h-12 sm:h-11 text-base font-semibold rounded-xl overflow-hidden relative"
           >
-            <Link href="/shop?category=hair-clip">Hair Clips</Link>
+            <Link href={`/shop?category=${currentCategory.slug}`}>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={currentCategoryIndex}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="inline-block"
+                >
+                  {currentCategory.name}
+                </motion.span>
+              </AnimatePresence>
+            </Link>
           </Button>
         </motion.div>
 
