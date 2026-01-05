@@ -64,7 +64,7 @@ export async function getRevenueData(
     const result = await sql`
       SELECT 
         DATE(created_at) as date,
-        SUM(total_amount) as revenue,
+        SUM(total_amount - COALESCE(delivery_fee, 0)) as revenue,
         COUNT(*) as orders
       FROM orders 
       WHERE status IN ('paid', 'packed', 'collected')
@@ -184,10 +184,19 @@ export async function getSecretCodeMetrics(): Promise<{
       FROM secret_codes
     `
 
+    // Calculate revenue from orders that used secret codes (excluding delivery fees)
+    const revenueResult = await sql`
+      SELECT COALESCE(SUM(o.total_amount - COALESCE(o.delivery_fee, 0)), 0) as total_revenue
+      FROM orders o
+      INNER JOIN secret_codes sc ON sc.order_id = o.id AND sc.is_used = true
+      WHERE o.status IN ('paid', 'packed', 'collected')
+    `
+
     const codes = codesResult[0]
     const total = parseInt(codes.total_codes || 0)
     const scanned = parseInt(codes.scanned_codes || 0)
     const used = parseInt(codes.used_codes || 0)
+    const revenue = parseFloat(revenueResult[0]?.total_revenue || 0)
 
     const data: SecretCodeMetrics = {
       total_codes: total,
@@ -195,7 +204,7 @@ export async function getSecretCodeMetrics(): Promise<{
       used_codes: used,
       scan_rate: total > 0 ? (scanned / total) * 100 : 0,
       conversion_rate: scanned > 0 ? (used / scanned) * 100 : 0,
-      total_revenue: 0, // Column doesn't exist yet - run migration to track this
+      total_revenue: revenue,
     }
 
     return { success: true, data }
@@ -213,40 +222,53 @@ export async function getBundlePerformance(
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    // Check if items contain bundles by looking at the items JSON
+    // Use the same bundle detection logic as the orders page
+    // Check if order contains products that match an active bundle definition
     const result = await sql`
       SELECT 
         COUNT(*) FILTER (
           WHERE EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(items) AS item
-            WHERE (item->>'is_bundle')::boolean = true
+            SELECT 1 FROM bundles b 
+            WHERE b.is_active = true 
+            AND b.product_ids <@ (
+              SELECT array_agg((item->>'product_id')::int) 
+              FROM jsonb_array_elements(o.items) AS item
+            )
           )
         ) as bundle_orders,
         COUNT(*) FILTER (
           WHERE NOT EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(items) AS item
-            WHERE (item->>'is_bundle')::boolean = true
+            SELECT 1 FROM bundles b 
+            WHERE b.is_active = true 
+            AND b.product_ids <@ (
+              SELECT array_agg((item->>'product_id')::int) 
+              FROM jsonb_array_elements(o.items) AS item
+            )
           )
         ) as individual_orders,
-        COALESCE(SUM(total_amount) FILTER (
+        COALESCE(SUM(o.total_amount - COALESCE(o.delivery_fee, 0)) FILTER (
           WHERE EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(items) AS item
-            WHERE (item->>'is_bundle')::boolean = true
+            SELECT 1 FROM bundles b 
+            WHERE b.is_active = true 
+            AND b.product_ids <@ (
+              SELECT array_agg((item->>'product_id')::int) 
+              FROM jsonb_array_elements(o.items) AS item
+            )
           )
         ), 0) as bundle_revenue,
-        COALESCE(SUM(total_amount) FILTER (
+        COALESCE(SUM(o.total_amount - COALESCE(o.delivery_fee, 0)) FILTER (
           WHERE NOT EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(items) AS item
-            WHERE (item->>'is_bundle')::boolean = true
+            SELECT 1 FROM bundles b 
+            WHERE b.is_active = true 
+            AND b.product_ids <@ (
+              SELECT array_agg((item->>'product_id')::int) 
+              FROM jsonb_array_elements(o.items) AS item
+            )
           )
         ), 0) as individual_revenue
-      FROM orders
-      WHERE status IN ('paid', 'packed', 'collected')
-        AND created_at >= ${startDate.toISOString()}
+      FROM orders o
+      WHERE o.status IN ('paid', 'packed', 'collected')
+        AND o.created_at >= ${startDate.toISOString()}
     `
 
     const row = result[0]

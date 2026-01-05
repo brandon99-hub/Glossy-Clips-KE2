@@ -258,11 +258,17 @@ export function AnalyticsClient({
                             <span className="font-bold">{initialSecretCodes.total_codes}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Codes Scanned</span>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                Codes Scanned
+                                <span className="text-xs text-muted-foreground/60" title="Number of QR codes scanned by customers">(checkout codes)</span>
+                            </span>
                             <span className="font-bold">{initialSecretCodes.scanned_codes}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Codes Used (Purchased)</span>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                Codes Used (Purchased)
+                                <span className="text-xs text-muted-foreground/60" title="Includes both checkout codes and reward codes from paid orders">(all types)</span>
+                            </span>
                             <span className="font-bold">{initialSecretCodes.used_codes}</span>
                         </div>
                         <div className="h-px bg-border" />

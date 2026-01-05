@@ -383,6 +383,13 @@ function CartContent() {
 
         // 3. Clear cart and redirect
         clearCart()
+
+        // Track if this was a secret purchase for success page styling
+        const wasSecretPurchase = typeof window !== 'undefined' && localStorage.getItem('active_secret_code')
+        if (wasSecretPurchase) {
+          localStorage.setItem('was_secret_purchase', 'true')
+        }
+
         if (typeof window !== 'undefined') localStorage.removeItem('active_secret_code')
         router.push(`/success/${result.referenceCode}`)
       } else {
