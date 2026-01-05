@@ -9,13 +9,19 @@ export function notifyOwnerNewOrder(order: {
 }) {
     const ownerPhone = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "254741991213"
 
+    const deliveryMethodLabel = order.deliveryMethod === "pickup-mtaani"
+        ? "Pickup Mtaani"
+        : order.deliveryMethod === "door-to-door"
+            ? "Door to Door"
+            : "Self Pickup";
+
     const message = `🛍️ NEW ORDER!
 
 Ref: ${order.referenceCode}
 Customer: ${order.customerName}
 Phone: ${order.phoneNumber}
 Amount: KES ${order.totalAmount.toLocaleString()}
-Delivery: ${order.deliveryMethod === "pickup-mtaani" ? "Pickup Mtaani" : "Self Pickup"}
+Delivery: ${deliveryMethodLabel}
 Location: ${order.pickupLocation}
 
 Check admin panel to confirm payment.`

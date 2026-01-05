@@ -2,13 +2,17 @@
 
 export interface PickupMtaaniLocation {
     id: number
+    agent_id?: string
     name: string
     address?: string
     latitude?: number
     longitude?: number
     zone?: string
     area?: string
+    description?: string
+    google_maps_url?: string
     is_active?: boolean
+    has_gps?: boolean
 }
 
 export interface PickupMtaaniArea {
@@ -25,6 +29,8 @@ export interface PickupMtaaniZone {
 export interface DeliveryChargeParams {
     origin_agent_id: number
     destination_agent_id: number
+    origin_area?: string
+    destination_area?: string
     package_size: 'small' | 'medium' | 'large'
 }
 

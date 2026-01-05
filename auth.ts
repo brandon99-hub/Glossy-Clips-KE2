@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
                         id: customer.id.toString(),
                         email: customer.email,
                         name: customer.name || customer.email.split('@')[0],
+                        phone: customer.phone_number
                     }
                 } catch (error) {
                     console.error("Auth error:", error)
@@ -57,12 +58,14 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id
+                token.phone = (user as any).phone
             }
             return token
         },
         async session({ session, token }) {
             if (session.user) {
                 (session.user as any).id = token.id as string
+                (session.user as any).phone = token.phone as string
             }
             return session
         },

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import {
-    Package, MapPin, User, LogOut, Trash2, Plus,
+    Package, MapPin, User, LogOut, Trash2, Plus, Store,
     ShoppingBag, Clock, CheckCircle, Truck, Star,
     AlertCircle, Loader2, RefreshCcw, Heart, Bell
 } from "lucide-react"
@@ -313,32 +313,31 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                         key={order.id}
                                         className="bg-white/70 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border-2 border-white/40 hover:shadow-xl hover:border-rose-200 transition-all"
                                     >
-                                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-5">
-                                            <div className="w-full sm:w-auto">
-                                                <div className="flex items-center gap-2 flex-wrap mb-2">
-                                                    <span className="font-mono font-black text-lg sm:text-xl bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">#{order.reference_code}</span>
-                                                    {order.secret_code && order.secret_code.trim() !== "" && (
-                                                        <span className="bg-gradient-to-r from-rose-500 to-pink-500 text-[11px] text-white px-2.5 py-1 rounded-full font-bold shadow-sm">
-                                                            ㊙️ SECRET
-                                                        </span>
-                                                    )}
-                                                    {order.has_bundle && (
-                                                        <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-[11px] text-white px-2.5 py-1 rounded-full font-bold shadow-sm">
-                                                            🎁 BUNDLE
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm sm:text-base text-muted-foreground font-semibold">
+                                        <div className="flex items-center justify-between gap-4 mb-5">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-base sm:text-lg text-gray-900 font-black mb-1">
                                                     {new Date(order.created_at).toLocaleDateString("en-US", {
                                                         month: "long",
                                                         day: "numeric",
                                                         year: "numeric",
                                                     })}
                                                 </p>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {order.secret_code && order.secret_code.trim() !== "" && (
+                                                        <span className="bg-rose-500 text-[9px] text-white px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">
+                                                            ㊙️ SECRET
+                                                        </span>
+                                                    )}
+                                                    {order.has_bundle && (
+                                                        <span className="bg-blue-500 text-[9px] text-white px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">
+                                                            🎁 BUNDLE
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl overflow-hidden shadow-md ${status.color}`}>
-                                                <StatusIcon className="w-5 h-5" />
-                                                <span className="text-sm sm:text-base font-black uppercase tracking-wide">{status.label}</span>
+                                            <div className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm ${status.color} border-current/10`}>
+                                                <StatusIcon className="w-3.5 h-3.5" />
+                                                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest leading-none">{status.label}</span>
                                             </div>
                                         </div>
 
@@ -730,10 +729,17 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-bold text-gray-800 truncate">{address.location}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    {address.phone_number && (
-                                                        <p className="text-xs text-muted-foreground font-medium">{address.phone_number}</p>
-                                                    )}
+                                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm flex items-center gap-1 ${address.address_type === 'pickup_mtaani'
+                                                        ? 'bg-purple-50 text-purple-700 border-purple-100'
+                                                        : 'bg-blue-50 text-blue-700 border-blue-100'
+                                                        }`}>
+                                                        {address.address_type === 'pickup_mtaani' ? (
+                                                            <><Store className="w-2.5 h-2.5" /> Pickup Mtaani</>
+                                                        ) : (
+                                                            <><Truck className="w-2.5 h-2.5" /> Door to Door</>
+                                                        )}
+                                                    </span>
                                                     {address.is_default && (
                                                         <span className="text-[9px] bg-green-100 text-green-700 font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-green-200">
                                                             DEFAULT
@@ -772,8 +778,29 @@ export function DashboardClient({ orders, customer, addresses }: DashboardClient
                                             router.refresh()
                                         }
                                     }}
-                                    className="space-y-5"
+                                    className="space-y-6"
                                 >
+                                    <div className="space-y-3">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Address Category</Label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <label className="relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 cursor-pointer transition-all hover:bg-rose-50 has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50 group">
+                                                <input type="radio" name="addressType" value="door_to_door" defaultChecked className="sr-only" />
+                                                <Truck className="w-5 h-5 text-muted-foreground group-has-[:checked]:text-rose-600 transition-colors" />
+                                                <span className="text-[10px] font-black uppercase tracking-tight text-muted-foreground group-has-[:checked]:text-rose-900">Door To Door</span>
+                                                <div className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 border-muted group-has-[:checked]:border-rose-500 group-has-[:checked]:bg-rose-500 flex items-center justify-center">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-white opacity-0 group-has-[:checked]:opacity-100" />
+                                                </div>
+                                            </label>
+                                            <label className="relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 cursor-pointer transition-all hover:bg-purple-50 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 group">
+                                                <input type="radio" name="addressType" value="pickup_mtaani" className="sr-only" />
+                                                <Store className="w-5 h-5 text-muted-foreground group-has-[:checked]:text-purple-600 transition-colors" />
+                                                <span className="text-[10px] font-black uppercase tracking-tight text-muted-foreground group-has-[:checked]:text-purple-900">Pickup Agent</span>
+                                                <div className="absolute top-2 right-2 w-4 h-4 rounded-full border-2 border-muted group-has-[:checked]:border-purple-500 group-has-[:checked]:bg-purple-500 flex items-center justify-center">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-white opacity-0 group-has-[:checked]:opacity-100" />
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                         <div className="space-y-2">
                                             <Label htmlFor="location" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Delivery Location</Label>

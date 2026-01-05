@@ -133,11 +133,20 @@ export type InventoryAlert = {
 
 export type PickupMtaaniLocation = {
   id: number
+  agent_id: string | null
   name: string
   area: string
+  zone: string | null
   address: string | null
   delivery_fee: number
+  delivery_fee_min?: number
+  delivery_fee_max?: number
   is_active: boolean
+  latitude: number | null
+  longitude: number | null
+  description: string | null
+  google_maps_url: string | null
+  has_gps?: boolean
   created_at: string
 }
 

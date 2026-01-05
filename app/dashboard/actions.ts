@@ -141,6 +141,7 @@ export async function addCustomerAddress(formData: FormData) {
 
     const location = formData.get("location") as string
     const phone = formData.get("phone") as string
+    const addressType = formData.get("addressType") as string || 'door_to_door'
     const isDefault = formData.get("isDefault") === "on"
 
     try {
@@ -154,8 +155,8 @@ export async function addCustomerAddress(formData: FormData) {
         }
 
         await sql`
-      INSERT INTO customer_addresses (customer_id, location, phone_number, is_default)
-      VALUES (${parseInt(session.user.id)}, ${location}, ${phone}, ${isDefault})
+      INSERT INTO customer_addresses (customer_id, location, phone_number, address_type, is_default)
+      VALUES (${parseInt(session.user.id)}, ${location}, ${phone}, ${addressType}, ${isDefault})
     `
 
         revalidatePath("/dashboard")

@@ -1,5 +1,5 @@
 // Service Worker for PWA
-const CACHE_NAME = 'glossyke-v1'
+const CACHE_NAME = 'glossyke-v2' // Bumped version to force update
 const OFFLINE_URL = '/offline'
 
 const STATIC_ASSETS = [
@@ -33,34 +33,34 @@ self.addEventListener('activate', (event) => {
     self.clients.claim()
 })
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network First Strategy
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') return
+    // Skip non-GET requests and chrome extensions
+    if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return
 
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse
-            }
-
-            return fetch(event.request)
-                .then((response) => {
-                    // Cache successful responses
-                    if (response.status === 200) {
-                        const responseClone = response.clone()
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(event.request, responseClone)
-                        })
+        fetch(event.request)
+            .then((response) => {
+                // If network works, cache it and return
+                if (response.status === 200) {
+                    const responseClone = response.clone()
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone)
+                    })
+                }
+                return response
+            })
+            .catch(() => {
+                // If network fails, try cache
+                return caches.match(event.request).then((cachedResponse) => {
+                    if (cachedResponse) {
+                        return cachedResponse
                     }
-                    return response
-                })
-                .catch(() => {
                     // Return offline page for navigation requests
                     if (event.request.mode === 'navigate') {
                         return caches.match(OFFLINE_URL)
                     }
                 })
-        })
+            })
     )
 })

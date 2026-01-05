@@ -4,86 +4,64 @@ import { pickupMtaaniClient } from "@/lib/pickup-mtaani"
 
 export async function GET() {
     try {
-        // Try to fetch from Pickup Mtaani API
-        const apiLocations = await pickupMtaaniClient.getLocations()
-
-        // If API is enabled and returned data, sync to database and return
-        if (pickupMtaaniClient.isEnabled() && apiLocations.length > 0) {
-            console.log(`[Pickup Mtaani] Fetched ${apiLocations.length} locations from API`)
-
-            // Sync locations to database for caching
-            try {
-                for (const loc of apiLocations) {
-                    await sql`
-                        INSERT INTO pickup_mtaani_locations (
-                            agent_id, name, area, zone, delivery_fee, is_active
-                        ) VALUES (
-                            ${loc.id}, 
-                            ${loc.name}, 
-                            ${loc.area || 'Nairobi'}, 
-                            ${loc.zone || 'Nairobi'}, 
-                            300, 
-                            true
-                        )
-                        ON CONFLICT (agent_id) 
-                        DO UPDATE SET 
-                            name = EXCLUDED.name,
-                            area = EXCLUDED.area,
-                            zone = EXCLUDED.zone,
-                            updated_at = NOW()
-                    `
-                }
-            } catch (dbError) {
-                console.error('[Pickup Mtaani] Failed to sync to database:', dbError)
-            }
-
-            // Return API data formatted for frontend
-            return NextResponse.json({
-                locations: apiLocations.map(loc => ({
-                    id: loc.id,
-                    name: loc.name,
-                    area: loc.area || 'Nairobi',
-                    zone: loc.zone || 'Nairobi',
-                    delivery_fee: 300, // Default fee, will be calculated dynamically
-                    is_active: true
-                })),
-                source: 'api'
-            })
-        }
-
-        // Fallback to database
+        // Fetch from database - The primary source of truth for 246 locations
+        // We include coordinates and description for "smart" display
         const dbLocations = await sql`
-            SELECT * FROM pickup_mtaani_locations 
-            WHERE is_active = true
+            SELECT 
+                id, 
+                agent_id, 
+                name, 
+                area, 
+                zone, 
+                delivery_fee, 
+                is_active, 
+                latitude, 
+                longitude, 
+                description, 
+                google_maps_url,
+                CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN true ELSE false END as has_gps
+            FROM pickup_mtaani_locations 
+            WHERE is_active = true 
             ORDER BY area ASC, name ASC
         `
 
         if (dbLocations.length > 0) {
-            console.log(`[Pickup Mtaani] Using ${dbLocations.length} locations from database`)
-            return NextResponse.json({ locations: dbLocations, source: 'database' })
+            console.log(`[Pickup Mtaani] Serving ${dbLocations.length} locations from database`)
+
+            // Calculate real-time fees relative to Joggers Hub
+            const locationsWithFees = dbLocations.map(loc => {
+                const range = pickupMtaaniClient.calculateLocalFee(
+                    'TMALL(LANGATA RD)', // Hub Area
+                    loc.area || 'Unknown',
+                    'small' // Default size for modal display
+                )
+                return {
+                    ...loc,
+                    delivery_fee_min: range.min,
+                    delivery_fee_max: range.max,
+                    delivery_fee: range.min // Fallback for components still using the old property
+                }
+            })
+
+            return NextResponse.json({
+                locations: locationsWithFees,
+                source: 'database_dynamic',
+                count: locationsWithFees.length
+            })
         }
 
-        // Final fallback to hardcoded data
-        console.log('[Pickup Mtaani] Using fallback hardcoded locations')
-        const fallbackLocations = [
-            { id: 1, name: "Westlands", area: "Westlands", zone: "Nairobi West", delivery_fee: 300, is_active: true },
-            { id: 2, name: "CBD", area: "CBD", zone: "Nairobi Central", delivery_fee: 250, is_active: true },
-            { id: 3, name: "Eastleigh", area: "Eastleigh", zone: "Nairobi East", delivery_fee: 300, is_active: true },
-            { id: 4, name: "Karen", area: "Karen", zone: "Nairobi South", delivery_fee: 400, is_active: true },
-            { id: 5, name: "Kasarani", area: "Kasarani", zone: "Nairobi North", delivery_fee: 350, is_active: true },
-        ]
-
-        return NextResponse.json({ locations: fallbackLocations, source: 'fallback' })
+        // Emergency fallback if database is empty - return empty list to avoid UI crash
+        console.warn('[Pickup Mtaani] No locations found in database')
+        return NextResponse.json({
+            locations: [],
+            source: 'database_empty',
+            count: 0
+        })
     } catch (error) {
         console.error("[Pickup Mtaani] Error in locations endpoint:", error)
-
-        // Return fallback data on error
-        const fallbackLocations = [
-            { id: 1, name: "Westlands", area: "Westlands", zone: "Nairobi West", delivery_fee: 300, is_active: true },
-            { id: 2, name: "CBD", area: "CBD", zone: "Nairobi Central", delivery_fee: 250, is_active: true },
-            { id: 3, name: "Eastleigh", area: "Eastleigh", zone: "Nairobi East", delivery_fee: 300, is_active: true },
-        ]
-
-        return NextResponse.json({ locations: fallbackLocations, source: 'error_fallback' })
+        return NextResponse.json(
+            { error: "Failed to fetch pickup locations", locations: [] },
+            { status: 500 }
+        )
     }
 }

@@ -12,7 +12,7 @@ export const orderSchema = z.object({
     pickupLocation: z
         .string()
         .min(3, "Please provide a valid pickup location"),
-    deliveryMethod: z.enum(["self-pickup", "pickup-mtaani"]).optional(),
+    deliveryMethod: z.enum(["self-pickup", "pickup-mtaani", "door-to-door"]).optional(),
     deliveryFee: z.number().min(0).default(0),
     pickupMtaaniLocationId: z.number().optional(),
     items: z

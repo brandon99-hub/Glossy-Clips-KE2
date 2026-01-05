@@ -31,7 +31,7 @@ export default function SuccessPage() {
   }
 
   const openWhatsApp = () => {
-    const message = `Hi, I just placed order ${reference}. Please confirm when you receive payment.`
+    const message = `Hi GlossyClipsKE! 👋\n\nI'd like to place this order:\n\n📦 ORDER ${reference}\n\nPlease confirm my exact total and send payment details! 🙏`
     window.open(`https://wa.me/${MPESA_PHONE}?text=${encodeURIComponent(message)}`, "_blank")
   }
 
@@ -40,9 +40,11 @@ export default function SuccessPage() {
       <div className="container mx-auto max-w-2xl">
         {/* Success Header */}
         <div className="text-center mb-8">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold mb-2">Order Placed!</h1>
-          <p className="text-muted-foreground">Reference Code: <span className="font-mono font-bold text-foreground">{reference}</span></p>
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShoppingBag className="h-8 w-8 text-blue-600" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Order Sent!</h1>
+          <p className="text-muted-foreground italic">Your reference code is: <span className="font-mono font-bold text-foreground">{reference}</span></p>
         </div>
 
         {/* Gift Card Reveal Modal */}
@@ -52,9 +54,9 @@ export default function SuccessPage() {
         <AccountCreationPrompt referenceCode={reference} />
 
         {/* Payment Instructions Card */}
-        <Card className="mb-6 bg-green-50 border-green-200">
+        <Card className="mb-6 bg-blue-50/50 border-blue-100 border-2">
           <CardHeader>
-            <CardTitle className="text-lg">💰 Next Steps - Send Payment</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">⏳ Awaiting Confirmation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -88,57 +90,57 @@ export default function SuccessPage() {
               </div>
             </div>
 
-            <Alert>
-              <AlertDescription className="text-sm">
-                We'll confirm your payment and contact you with pickup details within a few hours.
+            <Alert className="bg-white border-blue-200">
+              <AlertDescription className="text-sm font-medium text-blue-800">
+                We'll send you the exact total via WhatsApp within 5-10 minutes. Once confirmed, you can proceed with the M-Pesa payment below.
               </AlertDescription>
             </Alert>
           </CardContent>
         </Card>
 
-        {/* WhatsApp Support Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-green-600" />
-              Questions or Need Help?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Message us on WhatsApp with your reference code for instant support and payment confirmation.
-            </p>
-            <Button onClick={openWhatsApp} className="w-full bg-green-600 hover:bg-green-700">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              WhatsApp Us
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Backup WhatsApp Link */}
+        <div className="text-center mb-8">
+          <button
+            onClick={openWhatsApp}
+            className="text-xs font-bold text-green-600 hover:text-green-700 underline flex items-center justify-center gap-1.5 mx-auto"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Didn't open WhatsApp? Tap here to try again
+          </button>
+        </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button variant="outline" asChild className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <Button variant="outline" asChild className="w-full rounded-xl">
             <Link href="/shop">
               <ShoppingBag className="mr-2 h-4 w-4" />
               Continue Shopping
             </Link>
           </Button>
-          <Button variant="outline" asChild className="w-full">
+          <Button variant="outline" asChild className="w-full rounded-xl">
             <Link href="/">Back to Home</Link>
           </Button>
         </div>
 
-        {/* Order Details */}
-        <Card className="mt-6">
+        {/* Next Steps Guide */}
+        <Card className="border border-border/50 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-sm">What Happens Next?</CardTitle>
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">What Happens Next?</CardTitle>
           </CardHeader>
           <CardContent>
-            <ol className="text-sm space-y-2 text-muted-foreground">
-              <li>1. Send payment using the details above</li>
-              <li>2. We'll confirm your payment (usually within 1-2 hours)</li>
-              <li>3. You'll receive pickup/delivery details via SMS or WhatsApp</li>
-              <li>4. Collect your order and enjoy! 💄✨</li>
+            <ol className="text-sm space-y-4 text-muted-foreground font-medium">
+              <li className="flex gap-4">
+                <span className="bg-primary/10 w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-primary shrink-0">1</span>
+                <span>We've sent your order summary to WhatsApp. Please **wait for us to reply** with your exact total.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="bg-primary/10 w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-primary shrink-0">2</span>
+                <span>Once confirmed, send the payment using the **M-Pesa details** shown above.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="bg-primary/10 w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-primary shrink-0">3</span>
+                <span>After payment, we'll verify and coordinate your **delivery timing**! 💄✨</span>
+              </li>
             </ol>
           </CardContent>
         </Card>

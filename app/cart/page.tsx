@@ -1,53 +1,363 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingBag,
+  ArrowRight,
+  MapPin,
+  Building2,
+  Check,
+  Search,
+  Info,
+  Phone,
+  Truck,
+  Store,
+  AlertCircle,
+  MessageCircle,
+  Loader2,
+  ChevronLeft,
+  User
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerFooter
+} from "@/components/ui/drawer"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { useCart } from "@/lib/cart-context"
-import type { PickupMtaaniLocation } from "@/lib/db"
+import type { PickupMtaaniLocation, CustomerAddress } from "@/lib/db"
+import { getCustomerAddresses, getCustomerProfile } from "@/app/dashboard/actions"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { createOrder } from "@/app/checkout/actions"
 
-import { Suspense } from "react"
+// Helper to strip JS fragments and boilerplate from agent descriptions
+function sanitizeDescription(text: string | null) {
+  if (!text) return "Collection point."
+
+  let cleaned = text;
+
+  // 1. Nuke everything starting from known JS/JSON injection points
+  const nukeTokens = ['self.__NEXT_F', '{"', '["', 'window.', '<script', '/*'];
+  nukeTokens.forEach(token => {
+    const index = cleaned.indexOf(token);
+    if (index !== -1) {
+      cleaned = cleaned.substring(0, index);
+    }
+  });
+
+  // 2. Remove common boilerplate
+  cleaned = cleaned
+    .replace(/TERMS AND CONDITIONS.*/gi, '')
+    .replace(/PRIVACY POLICY.*/gi, '')
+    .replace(/PICKUP MTAANI @\d{4}.*/gi, '')
+    .replace(/ALL RIGHTS RESERVED.*/gi, '');
+
+  // 3. Clean up trailing remnants
+  cleaned = cleaned.replace(/[\[\]{}()\\\/=,;:]+$/, '').trim();
+
+  return cleaned || "Collection point."
+}
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  return isMobile
+}
+
+function AgentSelectionModal({
+  locations,
+  selectedLocation,
+  onSelect,
+  isOpen,
+  onOpenChange
+}: {
+  locations: PickupMtaaniLocation[],
+  selectedLocation: PickupMtaaniLocation | null,
+  onSelect: (loc: PickupMtaaniLocation) => void,
+  isOpen: boolean,
+  onOpenChange: (open: boolean) => void
+}) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const isMobile = useIsMobile()
+
+  const filteredLocations = useMemo(() => {
+    return locations.filter(loc =>
+      loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      loc.area.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [locations, searchQuery])
+
+  // Group by area
+  const locationsByArea = useMemo(() => {
+    return filteredLocations.reduce((acc, loc) => {
+      const area = loc.area || "Other"
+      if (!acc[area]) acc[area] = []
+      acc[area].push(loc)
+      return acc
+    }, {} as Record<string, PickupMtaaniLocation[]>)
+  }, [filteredLocations])
+
+  const Title = isMobile ? DrawerTitle : DialogTitle
+  const Description = isMobile ? DrawerDescription : DialogDescription
+
+  const content = (
+    <>
+      <div className="px-4 pt-1 pb-3 border-b bg-muted/20 sticky top-0 z-20 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-2">
+          <Title className="text-xs sm:text-base font-black flex items-center gap-2 uppercase tracking-tight">
+            <Store className="h-3.5 w-3.5 text-primary" />
+            Pickup Agent
+          </Title>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              <Info className="h-2.5 w-2.5" /> Official
+            </div>
+            {isMobile ? (
+              <DrawerClose asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-muted">
+                  <Plus className="h-3.5 w-3.5 rotate-45" />
+                </Button>
+              </DrawerClose>
+            ) : (
+              <DialogClose asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-muted">
+                  <Plus className="h-3.5 w-3.5 rotate-45" />
+                </Button>
+              </DialogClose>
+            )}
+          </div>
+        </div>
+
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <Input
+            placeholder="Search area or agent..."
+            className="pl-9 bg-background h-10 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="mt-1.5 flex items-center justify-between text-[9px] font-bold text-primary/60 uppercase tracking-widest px-1">
+          <span>{filteredLocations.length} Agents Available</span>
+          <span className="flex items-center gap-1 opacity-50"><Info className="h-2.5 w-2.5" /> Updated Daily</span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-[40vh]">
+        {Object.keys(locationsByArea).length > 0 ? (
+          Object.entries(locationsByArea).sort().map(([area, areaLocs]) => (
+            <div key={area} className="space-y-3">
+              <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] py-2">{area}</h3>
+              <div className="grid gap-2.5">
+                {areaLocs.map((loc) => (
+                  <button
+                    key={loc.id}
+                    onClick={() => onSelect(loc)}
+                    className={cn(
+                      "text-left p-3.5 rounded-2xl border-2 transition-all group",
+                      selectedLocation?.id === loc.id
+                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
+                    )}
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="font-bold text-sm truncate group-hover:text-primary transition-colors">{loc.name}</span>
+                          {selectedLocation?.id === loc.id && <Check className="h-4 w-4 text-primary shrink-0" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 italic leading-relaxed mb-2.5">
+                          {sanitizeDescription(loc.description)}
+                        </p>
+
+                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                          <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-tighter">Est. Fee</div>
+                          <div className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded-lg border border-primary/20 shadow-sm">
+                            KES {loc.delivery_fee_min || 180}-{loc.delivery_fee_max || 250}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3.5 pt-3 border-t border-dashed flex items-center justify-between">
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {loc.has_gps && loc.google_maps_url ? (
+                          <a
+                            href={loc.google_maps_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[9px] bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-bold tracking-tight hover:bg-sky-100 transition-colors shadow-sm"
+                          >
+                            <MapPin className="h-2.5 w-2.5" /> OPEN MAPS
+                          </a>
+                        ) : loc.has_gps ? (
+                          <span className="inline-flex items-center gap-1 text-[9px] bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-bold tracking-tight shadow-sm">
+                            <MapPin className="h-2.5 w-2.5" /> GPS READY
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="text-[9px] font-bold text-primary group-hover:translate-x-1 transition-transform">SELECT AGENT →</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-16 text-center space-y-4">
+            <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto text-muted-foreground/30">
+              <Search className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="font-bold text-muted-foreground">No matching agents</p>
+              <p className="text-xs text-muted-foreground/60">Try searching for a different area</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={isOpen} onOpenChange={onOpenChange}>
+        <DrawerContent className="h-[96vh] flex flex-col rounded-t-[2.5rem] border-t-0 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
+          <div className="mx-auto w-12 h-1 bg-muted-foreground/20 rounded-full mt-3 mb-1 shrink-0" />
+          {content}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl p-0 overflow-hidden flex flex-col h-[85vh] sm:h-[80vh] rounded-3xl border-none shadow-2xl">
+        {content}
+        <div className="p-4 border-t bg-muted/5">
+          <DialogClose asChild>
+            <Button variant="outline" className="w-full h-11 rounded-xl font-bold hover:bg-muted/50 transition-colors">Close Selection</Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function CartContent() {
-  const { items, removeItem, updateQuantity, totalAmount, addItem } = useCart()
+  const { data: session } = useSession()
+  const { items, removeItem, updateQuantity, totalAmount, addItem, clearCart } = useCart()
   const [locations, setLocations] = useState<PickupMtaaniLocation[]>([])
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([])
   const [selectedLocation, setSelectedLocation] = useState<PickupMtaaniLocation | null>(null)
+  const [suggestedAgent, setSuggestedAgent] = useState<PickupMtaaniLocation | null>(null)
+  const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'door'>('pickup')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [calculatingFee, setCalculatingFee] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+  })
+
+  const router = useRouter()
   const searchParams = useSearchParams()
   const isReorder = searchParams.get('reorder') === 'true'
 
-  // Fetch Pickup Mtaani locations first
+  // Fetch Pickup Mtaani locations and Customer addresses + Auto-fill Profile
   useEffect(() => {
-    async function fetchLocations() {
+    async function fetchData() {
       try {
         const response = await fetch("/api/pickup-locations")
         if (response.ok) {
           const data = await response.json()
           setLocations(data.locations || [])
         }
+
+        if (session) {
+          const [addrResult, profileResult] = await Promise.all([
+            getCustomerAddresses(),
+            getCustomerProfile()
+          ])
+
+          if (addrResult.success && addrResult.addresses) {
+            setAddresses(addrResult.addresses)
+          }
+
+          // Consolidated Reliable Auto-fill
+          setFormData(prev => {
+            const profileName = profileResult.success ? profileResult.customer?.name : null;
+            const profilePhone = profileResult.success ? profileResult.customer?.phone_number : null;
+            const sessionName = session.user?.name || "";
+            const sessionPhone = (session.user as any)?.phone || null;
+
+            // Fallback phone from addresses with safe checks
+            const addressPhone = (addrResult.success && addrResult.addresses && addrResult.addresses.length > 0)
+              ? (addrResult.addresses.find((a: any) => a.is_default) || addrResult.addresses[0]).phone_number
+              : null;
+
+            return {
+              name: prev.name || profileName || sessionName || "",
+              phone: prev.phone || profilePhone || sessionPhone || addressPhone || ""
+            };
+          });
+        }
       } catch (error) {
-        console.error("Error fetching locations:", error)
+        console.error("Error fetching data:", error)
       }
     }
-    fetchLocations()
-  }, [])
+    fetchData()
+  }, [session])
 
-  // Handle reorder items from localStorage
+  // Handle reorder items
   useEffect(() => {
     if (isReorder) {
       const reorderItems = localStorage.getItem('reorder_items')
-
       if (reorderItems) {
         try {
-          const items = JSON.parse(reorderItems)
-          // Add each item to cart
-          items.forEach((item: any) => {
+          const itemsArr = JSON.parse(reorderItems)
+          itemsArr.forEach((item: any) => {
             addItem({
               product_id: item.product_id,
               name: item.name,
@@ -56,38 +366,174 @@ function CartContent() {
               image: item.image || "",
             })
           })
-
-          // Clean up reorder items
           localStorage.removeItem('reorder_items')
-
-          toast.success("Order items added to cart!", {
-            description: `${items.length} item(s) ready for checkout`,
-          })
+          toast.success("Order items added to cart!")
         } catch (error) {
           console.error('Failed to load reorder items:', error)
-          toast.error("Failed to load order items")
         }
       }
     }
   }, [isReorder, addItem])
 
-  // Auto-select location after locations are loaded (separate effect)
+  // Auto-select location after locations are loaded
   useEffect(() => {
     if (isReorder && locations.length > 0) {
       const reorderLocationId = localStorage.getItem('reorder_location_id')
-
       if (reorderLocationId) {
         const loc = locations.find(l => l.id === parseInt(reorderLocationId))
         if (loc) {
           setSelectedLocation(loc)
-          // Clean up after successful selection
           localStorage.removeItem('reorder_location_id')
         }
       }
     }
-  }, [isReorder, locations])
-  const deliveryFee = selectedLocation?.delivery_fee || 0
-  const estimatedTotal = Number(totalAmount) + Number(deliveryFee)
+
+    // Smart Suggestion Logic: Match closest agent to saved addresses
+    if (locations.length > 0 && addresses.length > 0 && !selectedLocation) {
+      // Prioritize addresses marked for pickup_mtaani
+      const pickupAddresses = addresses.filter(a => a.address_type === 'pickup_mtaani')
+      const targetAddresses = pickupAddresses.length > 0 ? pickupAddresses : addresses
+
+      const defaultAddr = targetAddresses.find(a => a.is_default) || targetAddresses[0]
+      if (defaultAddr) {
+        // Simple string matching for now (Area name matching)
+        const matchedLoc = locations.find(loc =>
+          defaultAddr.location.toLowerCase().includes(loc.area.toLowerCase()) ||
+          loc.area.toLowerCase().includes(defaultAddr.location.toLowerCase())
+        )
+        if (matchedLoc) {
+          setSuggestedAgent(matchedLoc)
+        }
+      }
+    }
+  }, [isReorder, locations, addresses, selectedLocation])
+
+  // Dynamic Fee Calculation
+  useEffect(() => {
+    async function updateFee() {
+      if (!selectedLocation) return
+
+      setCalculatingFee(true)
+      try {
+        const response = await fetch("/api/shipping/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            destination_agent_id: selectedLocation.id,
+            cart_total: totalAmount,
+            cart_items: items.reduce((sum, item) => sum + item.quantity, 0)
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          // Update the local selectedLocation with the new calculated fee
+          setSelectedLocation(prev => prev ? {
+            ...prev,
+            delivery_fee: data.delivery_fee,
+            delivery_fee_min: data.delivery_fee_min,
+            delivery_fee_max: data.delivery_fee_max
+          } : null)
+        }
+      } catch (error) {
+        console.error("Fee calculation error:", error)
+      } finally {
+        setCalculatingFee(false)
+      }
+    }
+    updateFee()
+  }, [selectedLocation?.id, items.length, totalAmount])
+
+  const handleSendOrder = async () => {
+    if (deliveryMethod === 'pickup' && !selectedLocation) {
+      toast.error("Please select a pickup agent")
+      return
+    }
+
+    if (!session && (!formData.name || !formData.phone)) {
+      toast.error("Please provide your name and phone number")
+      return
+    }
+
+    setLoading(true)
+    try {
+      // Format phone number logic to be consistent with success page expectation
+      let formattedPhone = formData.phone.replace(/\s/g, "").replace(/\+/g, "")
+      if (formattedPhone.startsWith("254") && formattedPhone.length > 9) {
+        formattedPhone = "0" + formattedPhone.substring(3)
+      }
+      if (formattedPhone.length > 0 && !formattedPhone.startsWith("0")) {
+        formattedPhone = "0" + formattedPhone
+      }
+
+      const result = await createOrder({
+        customerName: session?.user?.name || formData.name,
+        phoneNumber: formattedPhone,
+        pickupLocation: deliveryMethod === 'door'
+          ? "Door to Door Service"
+          : (selectedLocation?.name || "Pickup Mtaani Agent"),
+        deliveryMethod: deliveryMethod === 'door' ? 'door-to-door' : 'pickup-mtaani',
+        deliveryFee: Number(selectedLocation?.delivery_fee_min || 0),
+        pickupMtaaniLocationId: selectedLocation?.id,
+        items: items.map(item => ({
+          ...item,
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          image: item.image || "",
+        })),
+        totalAmount: Number(totalAmount) + Number(selectedLocation?.delivery_fee_min || 0),
+        secretCode: typeof window !== 'undefined' ? localStorage.getItem('active_secret_code') || undefined : undefined,
+      }, session?.user?.id ? parseInt(session.user.id) : undefined)
+
+      if (result.success && result.referenceCode) {
+        // 1. Generate Highly Detailed WhatsApp Message
+        const itemsList = items.map((item, index) => {
+          const itemTotal = Number(item.price) * item.quantity;
+          return `${index + 1}. ${item.name} (${item.quantity} x KES ${Number(item.price).toLocaleString()}) = KES ${itemTotal.toLocaleString()}`;
+        }).join('\n');
+
+        const deliveryNote = deliveryMethod === 'door'
+          ? "🚚 Door-to-Door Service"
+          : `📍 Pickup: ${selectedLocation?.name || "Pickup Mtaani Agent"}`
+
+        const message =
+          `Hi GlossyClipsKE! 👋
+
+I've just placed an order:
+📦 REFERENCE: ${result.referenceCode}
+
+ORDER SUMMARY:
+${itemsList}
+
+💰 SUBTOTAL: KES ${totalAmount.toLocaleString()}
+🛵 DELIVERY: ${deliveryNote}
+
+Please confirm my exact total with delivery fees so I can pay! 🙏`;
+
+        // 2. Open WhatsApp immediately
+        const MPESA_PHONE = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "0742111111"
+        window.open(`https://wa.me/${MPESA_PHONE}?text=${encodeURIComponent(message)}`, "_blank")
+
+        // 3. Clear cart and redirect
+        clearCart()
+        if (typeof window !== 'undefined') localStorage.removeItem('active_secret_code')
+        router.push(`/success/${result.referenceCode}`)
+      } else {
+        toast.error(result.error || "Failed to create order.")
+      }
+    } catch (error) {
+      console.error("Order creation error:", error)
+      toast.error("Something went wrong.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deliveryFeeMin = deliveryMethod === 'pickup' ? (selectedLocation?.delivery_fee_min || 0) : 0
+  const deliveryFeeMax = deliveryMethod === 'pickup' ? (selectedLocation?.delivery_fee_max || 0) : 0
+
+  const estimatedTotalMin = Number(totalAmount) + Number(deliveryFeeMin)
+  const estimatedTotalMax = Number(totalAmount) + Number(deliveryFeeMax)
 
   if (items.length === 0) {
     return (
@@ -114,7 +560,7 @@ function CartContent() {
         <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
 
         {/* Cart Items */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-4 mb-8">
           <AnimatePresence>
             {items.map((item) => (
               <motion.div
@@ -123,31 +569,32 @@ function CartContent() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="flex gap-4 bg-muted rounded-xl p-3"
+                className="flex gap-4 bg-muted/60 backdrop-blur-sm rounded-2xl p-4 border border-border/50 shadow-sm"
               >
-                <Image
-                  src={item.image || "/placeholder.svg"}
-                  alt={item.name}
-                  width={80}
-                  height={80}
-                  className="w-20 h-20 rounded-lg object-cover"
-                />
+                <div className="relative w-20 h-20 shrink-0">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    fill
+                    className="rounded-xl object-cover"
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm line-clamp-2 mb-1">{item.name}</h3>
-                  <p className="text-primary font-semibold text-sm">KES {item.price.toLocaleString()}</p>
+                  <h3 className="font-semibold text-sm line-clamp-2 mb-1 leading-tight">{item.name}</h3>
+                  <p className="text-primary font-bold text-sm">KES {item.price.toLocaleString()}</p>
 
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1 bg-background rounded-full">
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-1 bg-background rounded-full border border-border p-0.5">
                       <button
                         onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                        className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
-                      <span className="w-6 text-center text-sm">{item.quantity}</span>
+                      <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                        className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -165,69 +612,356 @@ function CartContent() {
           </AnimatePresence>
         </div>
 
-        {/* Pickup Location Selector - EXACT COPY from checkout */}
-        <div className="bg-muted rounded-xl p-4 mb-4">
-          <Label htmlFor="pickup-location">Pickup Mtaani Location</Label>
-          <Select
-            onValueChange={(value) => {
-              const loc = locations.find((l) => l.id === parseInt(value))
-              setSelectedLocation(loc || null)
-            }}
-            required
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id.toString()}>
-                  <div className="flex items-center w-full max-w-[280px] md:max-w-md">
-                    <span className="truncate">
-                      {loc.name} - {loc.area} (KES {loc.delivery_fee})
-                    </span>
+        {/* Delivery Method Selector */}
+        <div className="space-y-4 mb-6">
+          <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Delivery Method</Label>
+          <Tabs value={deliveryMethod} onValueChange={(v) => setDeliveryMethod(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-xl">
+              <TabsTrigger value="pickup" className="rounded-lg gap-2 data-[state=active]:shadow-md">
+                <Store className="h-4 w-4" />
+                <span className="font-semibold">Pickup Agent</span>
+              </TabsTrigger>
+              <TabsTrigger value="door" className="rounded-lg gap-2 data-[state=active]:shadow-md">
+                <Truck className="h-4 w-4" />
+                <span className="font-semibold">Door-to-Door</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Conditional Content: Pickup Mtaani */}
+          {deliveryMethod === 'pickup' && (
+            <div className="space-y-4">
+              {/* Proximity Suggestion */}
+              {suggestedAgent && !selectedLocation && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-full text-primary">
+                      <MapPin className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-primary tracking-widest">Suggested Nearby</p>
+                      <p className="text-sm font-bold truncate max-w-[150px]">{suggestedAgent.name}</p>
+                    </div>
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground mt-1">
-            Delivery fee: KES {selectedLocation?.delivery_fee || 0}
-          </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedLocation(suggestedAgent)}
+                    className="text-primary font-black text-[10px] uppercase hover:bg-primary/10"
+                  >
+                    Use this
+                  </Button>
+                </motion.div>
+              )}
+
+              <div className="bg-muted/40 rounded-3xl p-5 border border-border/50 shadow-sm space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Collection Point</Label>
+                    {selectedLocation && (
+                      <button onClick={() => setIsModalOpen(true)} className="text-[10px] font-bold text-primary hover:underline uppercase">Change</button>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className={cn(
+                      "w-full flex items-center justify-between bg-background p-4 rounded-2xl border-2 transition-all text-left",
+                      selectedLocation ? "border-primary" : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    {selectedLocation ? (
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <Store className="h-5 w-5" />
+                        </div>
+                        <div className="truncate">
+                          <p className="font-bold text-sm truncate">{selectedLocation.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{selectedLocation.area}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                          <Search className="h-5 w-5" />
+                        </div>
+                        <span className="text-sm font-medium">Select Pickup Agent...</span>
+                      </div>
+                    )}
+                    <ArrowRight className="h-4 w-4 shrink-0 opacity-30" />
+                  </button>
+
+                  <AgentSelectionModal
+                    isOpen={isModalOpen}
+                    onOpenChange={setIsModalOpen}
+                    locations={locations}
+                    selectedLocation={selectedLocation}
+                    onSelect={(loc) => {
+                      setSelectedLocation(loc)
+                      setIsModalOpen(false)
+                    }}
+                  />
+                </div>
+
+                {selectedLocation && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white/60 border border-border rounded-2xl p-4 space-y-3"
+                  >
+                    <div className="flex gap-3">
+                      <div className="bg-blue-50 text-blue-600 p-2 rounded-xl h-fit">
+                        <Info className="h-4 w-4" />
+                      </div>
+                      <div className="text-xs">
+                        <p className="font-black text-blue-900/40 uppercase tracking-widest text-[9px] mb-1">Agent Instructions</p>
+                        <p className="text-muted-foreground leading-relaxed italic pr-2 font-medium">
+                          {selectedLocation.description || "Collection point."}
+                        </p>
+                        <div className="flex flex-wrap gap-3 mt-4">
+                          {selectedLocation.google_maps_url && (
+                            <a href={selectedLocation.google_maps_url} target="_blank" rel="noopener noreferrer" className="bg-sky-50 text-sky-700 text-[10px] font-black px-3 py-1.5 rounded-lg border border-sky-100 hover:bg-sky-100 transition-colors uppercase tracking-wider flex items-center gap-1.5">
+                              <MapPin className="h-3 w-3" /> Exact GPS
+                            </a>
+                          )}
+                          {selectedLocation.description && selectedLocation.description.match(/(\+?254|0)[17]\d{8}/) && (
+                            <a href={`tel:${selectedLocation.description.match(/(\+?254|0)[17]\d{8}/)?.[0]}`} className="bg-green-50 text-green-700 text-[10px] font-black px-3 py-1.5 rounded-lg border border-green-100 hover:bg-green-100 transition-colors uppercase tracking-wider flex items-center gap-1.5">
+                              <Phone className="h-3 w-3" /> Call Agent
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="bg-gradient-to-r from-primary/5 to-pink-500/5 rounded-2xl p-3 border border-primary/5">
+                  <p className="text-[9px] text-center text-muted-foreground font-black uppercase tracking-[0.15em]">
+                    Verified Pickup Mtaani Rates: <span className="text-primary">100 - 450 KES</span>
+                  </p>
+                </div>
+
+                {/* Contact Information Accordion - Below Pickup Selection */}
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="contact" className="border-none bg-white/60 backdrop-blur-sm rounded-2xl border border-border px-4 shadow-sm">
+                    <AccordionTrigger className="hover:no-underline py-3.5">
+                      <div className="flex items-center gap-3 text-left">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          <User className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1">Contact Details</p>
+                          <p className="text-xs font-bold leading-none">
+                            {formData.name || "Enter Name"} • {formData.phone || "Enter Phone"}
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 pt-1">
+                      <div className="space-y-3">
+                        <div className="relative group">
+                          <Input
+                            placeholder="Your Full Name"
+                            className="bg-background h-10 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+                            value={formData.name}
+                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+                        <div className="relative group">
+                          <Input
+                            placeholder="M-Pesa Number (07XX XXX XXX)"
+                            className="bg-background h-10 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+                            value={formData.phone}
+                            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                          />
+                        </div>
+                        <p className="text-[9px] text-muted-foreground italic leading-tight">
+                          We'll use this to send your order summary and confirm payment via WhatsApp.
+                        </p>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </div>
+          )}
+
+          {/* Conditional Content: Door to Door */}
+          {deliveryMethod === 'door' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="space-y-4"
+            >
+              <div className="bg-white/80 rounded-[2rem] p-6 border-2 border-border border-dashed space-y-5 text-center shadow-xl shadow-muted/20">
+                <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg rotate-3">
+                  <Truck className="h-8 w-8" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-black text-xl">Courier Delivery</h3>
+                  <p className="text-sm text-muted-foreground px-4 leading-relaxed font-medium">
+                    {addresses.some(a => a.address_type === 'door_to_door')
+                      ? "Pick one of your saved delivery addresses below for a faster checkout."
+                      : "Direct doorstep delivery via Uber, Bolt or G4S. Secure and fast."
+                    }
+                  </p>
+                </div>
+
+                {addresses.some(a => a.address_type === 'door_to_door') && (
+                  <div className="bg-muted/30 p-2 rounded-2xl border border-border/50">
+                    <div className="flex flex-col gap-2">
+                      {addresses
+                        .filter(addr => addr.address_type === 'door_to_door')
+                        .map(addr => (
+                          <button
+                            key={addr.id}
+                            className="bg-white p-3 rounded-xl border border-border hover:border-primary transition-all text-left flex items-center gap-3 active:scale-95"
+                          >
+                            <div className="p-2 bg-rose-50 text-rose-500 rounded-lg">
+                              <MapPin className="h-4 w-4" />
+                            </div>
+                            <div className="truncate">
+                              <p className="font-bold text-xs truncate">{addr.location}</p>
+                              {addr.phone_number && (
+                                <p className="text-[9px] text-muted-foreground uppercase font-medium">{addr.phone_number}</p>
+                              )}
+                            </div>
+                            {addr.is_default && <Check className="ml-auto h-3 w-3 text-green-500" />}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                  <p className="text-xs font-black text-primary uppercase tracking-widest">Real-Time Pricing</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 tracking-tight font-medium">
+                    Standard rates between <span className="font-bold underline">250 - 500 KES</span> in Nairobi.
+                  </p>
+                </div>
+              </div>
+
+              {/* Contact Information Accordion - Below Door to Door */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="contact" className="border-none bg-white/80 rounded-[2rem] border-2 border-border border-dashed px-4 shadow-sm">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <div className="flex items-center gap-3 text-left">
+                      <div className="w-9 h-9 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none mb-1">Contact Details</p>
+                        <p className="text-sm font-bold leading-none">
+                          {formData.name || "Enter Name"} • {formData.phone || "Enter Phone"}
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-5 pt-1">
+                    <div className="space-y-3">
+                      <div className="relative group">
+                        <Input
+                          placeholder="Your Full Name"
+                          className="bg-transparent h-11 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+                          value={formData.name}
+                          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        />
+                      </div>
+                      <div className="relative group">
+                        <Input
+                          placeholder="M-Pesa Number (07XX XXX XXX)"
+                          className="bg-transparent h-11 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+                          value={formData.phone}
+                          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        />
+                      </div>
+                      <p className="text-[9px] text-muted-foreground italic leading-tight px-1">
+                        We'll use this to send your order summary and confirm payment via WhatsApp.
+                      </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </motion.div>
+          )}
         </div>
 
-        {/* Summary */}
-        <div className="bg-muted rounded-xl p-4 mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span>KES {totalAmount.toLocaleString()}</span>
+        {/* Summary Card */}
+        <div className="bg-card rounded-2xl p-5 mb-8 border border-border shadow-sm space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground text-sm">Subtotal</span>
+            <span className="font-semibold">KES {totalAmount.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-muted-foreground">Delivery Fee</span>
-            <span className="text-sm">KES {deliveryFee}</span>
+          <div className="flex justify-between items-center px-1">
+            <span className="text-muted-foreground text-[10px] uppercase font-black tracking-widest">Delivery Fee</span>
+            <div className="text-right">
+              <span className="text-sm font-bold text-primary transition-all">
+                {calculatingFee ? (
+                  <span className="animate-pulse">Analyzing...</span>
+                ) : deliveryMethod === 'door' ? (
+                  <span className="text-muted-foreground italic text-[10px]">Uber/Bolt Rates</span>
+                ) : selectedLocation ? (
+                  `KES ${deliveryFeeMin.toLocaleString()} - ${deliveryFeeMax.toLocaleString()}`
+                ) : (
+                  "Select Agent"
+                )}
+              </span>
+              {deliveryMethod === 'pickup' && selectedLocation && !calculatingFee && (
+                <p className="text-[8px] text-muted-foreground uppercase tracking-tighter opacity-70">Joggers Hub → {selectedLocation.area}</p>
+              )}
+            </div>
           </div>
-          <div className="border-t border-border pt-2 mt-2 flex justify-between items-center">
-            <span className="font-semibold">Total</span>
-            <span className="font-bold text-lg">KES {estimatedTotal.toLocaleString()}</span>
+          <div className="border-t-2 border-dashed border-muted pt-3 mt-1 flex justify-between items-center px-1">
+            <span className="font-black text-xs uppercase tracking-widest text-muted-foreground">Est. Total</span>
+            <div className="text-right">
+              <span className="font-black text-2xl sm:text-3xl text-primary drop-shadow-sm tracking-tight">
+                {deliveryMethod === 'door' ? (
+                  `KES ${totalAmount.toLocaleString()} + Fees`
+                ) : (
+                  `KES ${estimatedTotalMin.toLocaleString()} - ${estimatedTotalMax.toLocaleString()}`
+                )}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Gift card teaser */}
-        <div className="bg-gradient-to-r from-rose-100 to-amber-50 rounded-xl p-4 mb-6 text-center">
-          <span className="text-2xl">🎁</span>
-          <p className="text-sm font-medium mt-1">You'll get a free gift card with this order!</p>
+        {/* Promos */}
+        <div className="bg-gradient-to-br from-rose-500/10 to-amber-500/10 rounded-2xl p-4 mb-8 text-center border border-primary/10 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110" />
+          <span className="text-3xl filter drop-shadow-md">🎁</span>
+          <p className="text-sm font-bold mt-2 text-primary">Special Gift Card Included!</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Every order supports our local beauty community</p>
         </div>
 
-        {/* Checkout Button */}
+
+        {/* Main CTA */}
         <Button
-          asChild
+          onClick={handleSendOrder}
           size="lg"
-          className="w-full bg-primary hover:bg-primary/90"
-          disabled={!selectedLocation}
+          className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-base font-bold shadow-xl shadow-primary/20 transition-all hover:-translate-y-0.5 active:scale-95"
+          disabled={loading || (deliveryMethod === 'pickup' && !selectedLocation)}
         >
-          <Link href={`/checkout?locationId=${selectedLocation?.id || ''}`}>
-            Proceed to Checkout <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <MessageCircle className="ml-2 h-5 w-5" />
+              {deliveryMethod === 'door' ? 'Send for Courier Rates' : 'Send Order via WhatsApp'}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </>
+          )}
         </Button>
+        <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-4">
+          Confirm exactly how much to pay via WhatsApp
+        </p>
       </div>
     </div>
   )
@@ -236,10 +970,10 @@ function CartContent() {
 export default function CartPage() {
   return (
     <Suspense fallback={
-      <div className="py-16 px-4 text-center">
-        <div className="container mx-auto max-w-md">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your cart...</p>
+      <div className="py-24 px-4 text-center">
+        <div className="container mx-auto max-w-md space-y-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground font-medium tracking-tight animate-pulse">Syncing with Pickup Mtaani...</p>
         </div>
       </div>
     }>
