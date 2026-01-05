@@ -190,7 +190,17 @@ export function AgentSelectionModal({
 
                                         <div className="mt-3.5 pt-3 border-t border-dashed flex items-center justify-between">
                                             <div className="flex flex-wrap gap-1.5 items-center">
-                                                {loc.has_gps && loc.google_maps_url ? (
+                                                {loc.latitude && loc.longitude ? (
+                                                    <a
+                                                        href={`https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="inline-flex items-center gap-1 text-[9px] bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-bold tracking-tight hover:bg-sky-100 transition-colors shadow-sm"
+                                                    >
+                                                        <MapPin className="h-2.5 w-2.5" /> EXACT GPS
+                                                    </a>
+                                                ) : loc.has_gps && loc.google_maps_url ? (
                                                     <a
                                                         href={loc.google_maps_url}
                                                         target="_blank"

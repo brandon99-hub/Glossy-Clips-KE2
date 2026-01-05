@@ -95,20 +95,72 @@ function CartContent() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/pickup-locations")
-        if (response.ok) {
-          const data = await response.json()
-          setLocations(data.locations || [])
+        // Check cache first
+        const cachedData = localStorage.getItem('pickup_locations_cache')
+        const cacheTimestamp = localStorage.getItem('pickup_locations_cache_timestamp')
+        const now = Date.now()
+        const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+
+        // Use cache if valid (less than 24 hours old)
+        if (cachedData && cacheTimestamp && (now - parseInt(cacheTimestamp)) < CACHE_DURATION) {
+          const parsedData = JSON.parse(cachedData)
+          setLocations(parsedData)
+        } else {
+          // Fetch fresh data if cache is stale or missing
+          const response = await fetch("/api/pickup-locations")
+          if (response.ok) {
+            const data = await response.json()
+            const locations = data.locations || []
+            setLocations(locations)
+
+            // Cache the data
+            localStorage.setItem('pickup_locations_cache', JSON.stringify(locations))
+            localStorage.setItem('pickup_locations_cache_timestamp', now.toString())
+          }
         }
 
         if (session) {
-          const [addrResult, profileResult] = await Promise.all([
-            getCustomerAddresses(),
-            getCustomerProfile()
-          ])
+          // Cache keys for user-specific data
+          const userId = session.user?.id || 'guest'
+          const addressCacheKey = `customer_addresses_${userId}`
+          const addressCacheTimestamp = `customer_addresses_timestamp_${userId}`
+          const profileCacheKey = `customer_profile_${userId}`
+          const ADDRESSES_CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 
-          if (addrResult.success && addrResult.addresses) {
-            setAddresses(addrResult.addresses)
+          // Check address cache
+          const cachedAddresses = localStorage.getItem(addressCacheKey)
+          const addressTimestamp = localStorage.getItem(addressCacheTimestamp)
+          let addrResult: any = null
+
+          if (cachedAddresses && addressTimestamp && (now - parseInt(addressTimestamp)) < ADDRESSES_CACHE_DURATION) {
+            // Use cached addresses
+            addrResult = { success: true, addresses: JSON.parse(cachedAddresses) }
+            setAddresses(JSON.parse(cachedAddresses))
+          } else {
+            // Fetch fresh addresses
+            addrResult = await getCustomerAddresses()
+            if (addrResult.success && addrResult.addresses) {
+              setAddresses(addrResult.addresses)
+              // Cache addresses
+              localStorage.setItem(addressCacheKey, JSON.stringify(addrResult.addresses))
+              localStorage.setItem(addressCacheTimestamp, now.toString())
+            }
+          }
+
+          // Check profile cache (use sessionStorage for profile - lasts for session)
+          const cachedProfile = sessionStorage.getItem(profileCacheKey)
+          let profileResult: any = null
+
+          if (cachedProfile) {
+            // Use cached profile
+            profileResult = { success: true, customer: JSON.parse(cachedProfile) }
+          } else {
+            // Fetch fresh profile
+            profileResult = await getCustomerProfile()
+            if (profileResult.success && profileResult.customer) {
+              // Cache profile in sessionStorage
+              sessionStorage.setItem(profileCacheKey, JSON.stringify(profileResult.customer))
+            }
           }
 
           // Consolidated Reliable Auto-fill
@@ -170,6 +222,19 @@ function CartContent() {
         if (loc) {
           setSelectedLocation(loc)
           localStorage.removeItem('reorder_location_id')
+        }
+      }
+    }
+
+    // Auto-detect delivery method based on default address
+    if (addresses.length > 0) {
+      const defaultAddress = addresses.find(a => a.is_default) || addresses[0]
+      if (defaultAddress) {
+        // Set delivery method based on address type
+        if (defaultAddress.address_type === 'pickup_mtaani') {
+          setDeliveryMethod('pickup')
+        } else if (defaultAddress.address_type === 'door_to_door') {
+          setDeliveryMethod('door')
         }
       }
     }
