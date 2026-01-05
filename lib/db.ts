@@ -35,6 +35,12 @@ export type Order = {
   delivery_method?: "pickup" | "pickup_mtaani"
   delivery_fee?: number
   pickup_mtaani_location?: string | null
+  address_type?: string | null
+  estate_name?: string | null
+  house_number?: string | null
+  landmark?: string | null
+  latitude?: number | null
+  longitude?: number | null
   secret_code?: string | null
   has_bundle?: boolean
   customer_id?: number | null
@@ -177,6 +183,13 @@ export type CustomerAddress = {
   customer_id: number
   address_type: string
   location: string
+  location_name?: string | null
+  estate_name?: string | null
+  house_number?: string | null
+  landmark?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  pickup_mtaani_id?: number | null
   phone_number: string | null
   is_default: boolean
   created_at: string

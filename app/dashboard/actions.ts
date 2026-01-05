@@ -144,6 +144,15 @@ export async function addCustomerAddress(formData: FormData) {
     const addressType = formData.get("addressType") as string || 'door_to_door'
     const isDefault = formData.get("isDefault") === "on"
 
+    // Advanced fields
+    const locationName = formData.get("locationName") as string
+    const estateName = formData.get("estateName") as string
+    const houseNumber = formData.get("houseNumber") as string
+    const landmark = formData.get("landmark") as string
+    const latitude = formData.get("latitude") ? parseFloat(formData.get("latitude") as string) : null
+    const longitude = formData.get("longitude") ? parseFloat(formData.get("longitude") as string) : null
+    const pickupMtaaniId = formData.get("pickupMtaaniId") ? parseInt(formData.get("pickupMtaaniId") as string) : null
+
     try {
         // If setting as default, unset other defaults
         if (isDefault) {
@@ -155,8 +164,14 @@ export async function addCustomerAddress(formData: FormData) {
         }
 
         await sql`
-      INSERT INTO customer_addresses (customer_id, location, phone_number, address_type, is_default)
-      VALUES (${parseInt(session.user.id)}, ${location}, ${phone}, ${addressType}, ${isDefault})
+      INSERT INTO customer_addresses (
+        customer_id, location, phone_number, address_type, is_default,
+        location_name, estate_name, house_number, landmark, latitude, longitude, pickup_mtaani_id
+      )
+      VALUES (
+        ${parseInt(session.user.id)}, ${location}, ${phone}, ${addressType}, ${isDefault},
+        ${locationName}, ${estateName}, ${houseNumber}, ${landmark}, ${latitude}, ${longitude}, ${pickupMtaaniId}
+      )
     `
 
         revalidatePath("/dashboard")
@@ -184,6 +199,36 @@ export async function deleteCustomerAddress(addressId: number) {
     } catch (error) {
         console.error("Error deleting address:", error)
         return { success: false, error: "Failed to delete address" }
+    }
+}
+
+export async function updateCustomerAddress(formData: FormData) {
+    const session = await auth()
+    if (!session?.user?.id) {
+        return { success: false, error: "Not authenticated" }
+    }
+
+    const addressId = parseInt(formData.get("addressId") as string)
+    const estateName = formData.get("estateName") as string
+    const houseNumber = formData.get("houseNumber") as string
+    const landmark = formData.get("landmark") as string
+
+    try {
+        await sql`
+      UPDATE customer_addresses
+      SET 
+        estate_name = ${estateName || null},
+        house_number = ${houseNumber || null},
+        landmark = ${landmark || null},
+        updated_at = NOW()
+      WHERE id = ${addressId} AND customer_id = ${parseInt(session.user.id)}
+    `
+
+        revalidatePath("/dashboard")
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating address:", error)
+        return { success: false, error: "Failed to update address" }
     }
 }
 
@@ -314,5 +359,46 @@ export async function removeFromWaitlist(productId: number) {
     } catch (error) {
         console.error("Error removing from waitlist:", error)
         return { success: false, error: "Failed to remove from waitlist" }
+    }
+}
+
+export async function getPickupLocations() {
+    try {
+        const dbLocations = await sql`
+            SELECT 
+                id, 
+                agent_id, 
+                name, 
+                area, 
+                zone, 
+                delivery_fee, 
+                is_active, 
+                latitude, 
+                longitude, 
+                description
+            FROM pickup_mtaani_locations 
+            WHERE is_active = true 
+            ORDER BY area ASC, name ASC
+        ` as any[]
+
+        const { pickupMtaaniClient } = await import("@/lib/pickup-mtaani")
+
+        const locationsWithFees = dbLocations.map(loc => {
+            const range = pickupMtaaniClient.calculateLocalFee(
+                'TMALL(LANGATA RD)',
+                loc.area || 'Unknown',
+                'small'
+            )
+            return {
+                ...loc,
+                delivery_fee_min: range.min,
+                delivery_fee_max: range.max
+            }
+        })
+
+        return { success: true, locations: locationsWithFees }
+    } catch (error) {
+        console.error("Error fetching locations:", error)
+        return { success: false, error: "Failed to fetch locations" }
     }
 }

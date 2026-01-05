@@ -61,229 +61,8 @@ import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { createOrder } from "@/app/checkout/actions"
+import { AgentSelectionModal, sanitizeDescription } from "@/components/agent-selection-modal"
 
-// Helper to strip JS fragments and boilerplate from agent descriptions
-function sanitizeDescription(text: string | null) {
-  if (!text) return "Collection point."
-
-  let cleaned = text;
-
-  // 1. Nuke everything starting from known JS/JSON injection points
-  const nukeTokens = ['self.__NEXT_F', '{"', '["', 'window.', '<script', '/*'];
-  nukeTokens.forEach(token => {
-    const index = cleaned.indexOf(token);
-    if (index !== -1) {
-      cleaned = cleaned.substring(0, index);
-    }
-  });
-
-  // 2. Remove common boilerplate
-  cleaned = cleaned
-    .replace(/TERMS AND CONDITIONS.*/gi, '')
-    .replace(/PRIVACY POLICY.*/gi, '')
-    .replace(/PICKUP MTAANI @\d{4}.*/gi, '')
-    .replace(/ALL RIGHTS RESERVED.*/gi, '');
-
-  // 3. Clean up trailing remnants
-  cleaned = cleaned.replace(/[\[\]{}()\\\/=,;:]+$/, '').trim();
-
-  return cleaned || "Collection point."
-}
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640)
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  return isMobile
-}
-
-function AgentSelectionModal({
-  locations,
-  selectedLocation,
-  onSelect,
-  isOpen,
-  onOpenChange
-}: {
-  locations: PickupMtaaniLocation[],
-  selectedLocation: PickupMtaaniLocation | null,
-  onSelect: (loc: PickupMtaaniLocation) => void,
-  isOpen: boolean,
-  onOpenChange: (open: boolean) => void
-}) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const isMobile = useIsMobile()
-
-  const filteredLocations = useMemo(() => {
-    return locations.filter(loc =>
-      loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      loc.area.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [locations, searchQuery])
-
-  // Group by area
-  const locationsByArea = useMemo(() => {
-    return filteredLocations.reduce((acc, loc) => {
-      const area = loc.area || "Other"
-      if (!acc[area]) acc[area] = []
-      acc[area].push(loc)
-      return acc
-    }, {} as Record<string, PickupMtaaniLocation[]>)
-  }, [filteredLocations])
-
-  const Title = isMobile ? DrawerTitle : DialogTitle
-  const Description = isMobile ? DrawerDescription : DialogDescription
-
-  const content = (
-    <>
-      <div className="px-4 pt-1 pb-3 border-b bg-muted/20 sticky top-0 z-20 backdrop-blur-md">
-        <div className="flex items-center justify-between mb-2">
-          <Title className="text-xs sm:text-base font-black flex items-center gap-2 uppercase tracking-tight">
-            <Store className="h-3.5 w-3.5 text-primary" />
-            Pickup Agent
-          </Title>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              <Info className="h-2.5 w-2.5" /> Official
-            </div>
-            {isMobile ? (
-              <DrawerClose asChild>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-muted">
-                  <Plus className="h-3.5 w-3.5 rotate-45" />
-                </Button>
-              </DrawerClose>
-            ) : (
-              <DialogClose asChild>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-full hover:bg-muted">
-                  <Plus className="h-3.5 w-3.5 rotate-45" />
-                </Button>
-              </DialogClose>
-            )}
-          </div>
-        </div>
-
-        <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-          <Input
-            placeholder="Search area or agent..."
-            className="pl-9 bg-background h-10 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className="mt-1.5 flex items-center justify-between text-[9px] font-bold text-primary/60 uppercase tracking-widest px-1">
-          <span>{filteredLocations.length} Agents Available</span>
-          <span className="flex items-center gap-1 opacity-50"><Info className="h-2.5 w-2.5" /> Updated Daily</span>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-[40vh]">
-        {Object.keys(locationsByArea).length > 0 ? (
-          Object.entries(locationsByArea).sort().map(([area, areaLocs]) => (
-            <div key={area} className="space-y-3">
-              <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] py-2">{area}</h3>
-              <div className="grid gap-2.5">
-                {areaLocs.map((loc) => (
-                  <button
-                    key={loc.id}
-                    onClick={() => onSelect(loc)}
-                    className={cn(
-                      "text-left p-3.5 rounded-2xl border-2 transition-all group",
-                      selectedLocation?.id === loc.id
-                        ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
-                    )}
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="font-bold text-sm truncate group-hover:text-primary transition-colors">{loc.name}</span>
-                          {selectedLocation?.id === loc.id && <Check className="h-4 w-4 text-primary shrink-0" />}
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 italic leading-relaxed mb-2.5">
-                          {sanitizeDescription(loc.description)}
-                        </p>
-
-                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                          <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-tighter">Est. Fee</div>
-                          <div className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded-lg border border-primary/20 shadow-sm">
-                            KES {loc.delivery_fee_min || 180}-{loc.delivery_fee_max || 250}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3.5 pt-3 border-t border-dashed flex items-center justify-between">
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        {loc.has_gps && loc.google_maps_url ? (
-                          <a
-                            href={loc.google_maps_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[9px] bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-bold tracking-tight hover:bg-sky-100 transition-colors shadow-sm"
-                          >
-                            <MapPin className="h-2.5 w-2.5" /> OPEN MAPS
-                          </a>
-                        ) : loc.has_gps ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-bold tracking-tight shadow-sm">
-                            <MapPin className="h-2.5 w-2.5" /> GPS READY
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="text-[9px] font-bold text-primary group-hover:translate-x-1 transition-transform">SELECT AGENT →</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="py-16 text-center space-y-4">
-            <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto text-muted-foreground/30">
-              <Search className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="font-bold text-muted-foreground">No matching agents</p>
-              <p className="text-xs text-muted-foreground/60">Try searching for a different area</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-    </>
-  )
-
-  if (isMobile) {
-    return (
-      <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[96vh] flex flex-col rounded-t-[2.5rem] border-t-0 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
-          <div className="mx-auto w-12 h-1 bg-muted-foreground/20 rounded-full mt-3 mb-1 shrink-0" />
-          {content}
-        </DrawerContent>
-      </Drawer>
-    )
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden flex flex-col h-[85vh] sm:h-[80vh] rounded-3xl border-none shadow-2xl">
-        {content}
-        <div className="p-4 border-t bg-muted/5">
-          <DialogClose asChild>
-            <Button variant="outline" className="w-full h-11 rounded-xl font-bold hover:bg-muted/50 transition-colors">Close Selection</Button>
-          </DialogClose>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 function CartContent() {
   const { data: session } = useSession()
@@ -291,6 +70,13 @@ function CartContent() {
   const [locations, setLocations] = useState<PickupMtaaniLocation[]>([])
   const [addresses, setAddresses] = useState<CustomerAddress[]>([])
   const [selectedLocation, setSelectedLocation] = useState<PickupMtaaniLocation | null>(null)
+  const [selectedAddress, setSelectedAddress] = useState<CustomerAddress | null>(null)
+  const [manualAddress, setManualAddress] = useState({
+    location: '',
+    estate: '',
+    houseNumber: '',
+    landmark: ''
+  })
   const [suggestedAgent, setSuggestedAgent] = useState<PickupMtaaniLocation | null>(null)
   const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'door'>('pickup')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -388,21 +174,21 @@ function CartContent() {
       }
     }
 
-    // Smart Suggestion Logic: Match closest agent to saved addresses
-    if (locations.length > 0 && addresses.length > 0 && !selectedLocation) {
+    // Auto-fill pickup location from saved addresses using pickup_mtaani_id
+    if (locations.length > 0 && addresses.length > 0 && !selectedLocation && !isReorder) {
       // Prioritize addresses marked for pickup_mtaani
       const pickupAddresses = addresses.filter(a => a.address_type === 'pickup_mtaani')
-      const targetAddresses = pickupAddresses.length > 0 ? pickupAddresses : addresses
 
-      const defaultAddr = targetAddresses.find(a => a.is_default) || targetAddresses[0]
-      if (defaultAddr) {
-        // Simple string matching for now (Area name matching)
-        const matchedLoc = locations.find(loc =>
-          defaultAddr.location.toLowerCase().includes(loc.area.toLowerCase()) ||
-          loc.area.toLowerCase().includes(defaultAddr.location.toLowerCase())
-        )
-        if (matchedLoc) {
-          setSuggestedAgent(matchedLoc)
+      if (pickupAddresses.length > 0) {
+        // Get default pickup address or first one
+        const defaultPickupAddr = pickupAddresses.find(a => a.is_default) || pickupAddresses[0]
+
+        // Use explicit pickup_mtaani_id for reliable matching
+        if (defaultPickupAddr.pickup_mtaani_id) {
+          const matchedLoc = locations.find(loc => loc.id === defaultPickupAddr.pickup_mtaani_id)
+          if (matchedLoc) {
+            setSelectedLocation(matchedLoc)
+          }
         }
       }
     }
@@ -470,11 +256,17 @@ function CartContent() {
         customerName: session?.user?.name || formData.name,
         phoneNumber: formattedPhone,
         pickupLocation: deliveryMethod === 'door'
-          ? "Door to Door Service"
+          ? (selectedAddress?.location || manualAddress.location || "Door to Door Service")
           : (selectedLocation?.name || "Pickup Mtaani Agent"),
         deliveryMethod: deliveryMethod === 'door' ? 'door-to-door' : 'pickup-mtaani',
         deliveryFee: Number(selectedLocation?.delivery_fee_min || 0),
         pickupMtaaniLocationId: selectedLocation?.id,
+        address_type: deliveryMethod === 'door' ? (selectedAddress?.address_type || 'door_to_door') : 'pickup_mtaani',
+        estate_name: deliveryMethod === 'door' ? (selectedAddress?.estate_name || manualAddress.estate || undefined) : undefined,
+        house_number: deliveryMethod === 'door' ? (selectedAddress?.house_number || manualAddress.houseNumber || undefined) : undefined,
+        landmark: deliveryMethod === 'door' ? (selectedAddress?.landmark || manualAddress.landmark || undefined) : undefined,
+        latitude: deliveryMethod === 'door' ? (selectedAddress?.latitude || undefined) : undefined,
+        longitude: deliveryMethod === 'door' ? (selectedAddress?.longitude || undefined) : undefined,
         items: items.map(item => ({
           ...item,
           price: Number(item.price),
@@ -492,23 +284,33 @@ function CartContent() {
           return `${index + 1}. ${item.name} (${item.quantity} x KES ${Number(item.price).toLocaleString()}) = KES ${itemTotal.toLocaleString()}`;
         }).join('\n');
 
-        const deliveryNote = deliveryMethod === 'door'
-          ? "🚚 Door-to-Door Service"
-          : `📍 Pickup: ${selectedLocation?.name || "Pickup Mtaani Agent"}`
+        let deliveryNote = ""
+        if (deliveryMethod === 'door') {
+          const addrParts = []
+          if (selectedAddress?.location || manualAddress.location) addrParts.push(selectedAddress?.location || manualAddress.location)
+          if (selectedAddress?.estate_name || manualAddress.estate) addrParts.push(`Estate: ${selectedAddress?.estate_name || manualAddress.estate}`)
+          if (selectedAddress?.house_number || manualAddress.houseNumber) addrParts.push(`House: ${selectedAddress?.house_number || manualAddress.houseNumber}`)
+          if (selectedAddress?.landmark || manualAddress.landmark) addrParts.push(`Landmark: ${selectedAddress?.landmark || manualAddress.landmark}`)
+
+          deliveryNote = `🚚 DOOR-TO-DOOR\n📍 Address: ${addrParts.join(', ') || "Door to Door Service"}`
+        } else {
+          deliveryNote = `📍 PICKUP: ${selectedLocation?.name || "Pickup Mtaani Agent"}`
+        }
 
         const message =
           `Hi GlossyClipsKE! 👋
-
-I've just placed an order:
-📦 REFERENCE: ${result.referenceCode}
-
-ORDER SUMMARY:
-${itemsList}
-
-💰 SUBTOTAL: KES ${totalAmount.toLocaleString()}
-🛵 DELIVERY: ${deliveryNote}
-
-Please confirm my exact total with delivery fees so I can pay! 🙏`;
+ 
+ I've just placed an order:
+ 📦 REFERENCE: ${result.referenceCode}
+ 
+ ORDER SUMMARY:
+ ${itemsList}
+ 
+ 💰 SUBTOTAL: KES ${totalAmount.toLocaleString()}
+ 🛵 DELIVERY:
+ ${deliveryNote}
+ 
+ Please confirm my exact total with delivery fees so I can pay! 🙏`;
 
         // 2. Open WhatsApp immediately
         const MPESA_PHONE = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "0742111111"
@@ -631,7 +433,7 @@ Please confirm my exact total with delivery fees so I can pay! 🙏`;
           {/* Conditional Content: Pickup Mtaani */}
           {deliveryMethod === 'pickup' && (
             <div className="space-y-4">
-              {/* Proximity Suggestion */}
+              {/* Proximity Suggestion - Disabled due to accuracy concerns
               {suggestedAgent && !selectedLocation && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -656,7 +458,7 @@ Please confirm my exact total with delivery fees so I can pay! 🙏`;
                     Use this
                   </Button>
                 </motion.div>
-              )}
+              )} */}
 
               <div className="bg-muted/40 rounded-3xl p-5 border border-border/50 shadow-sm space-y-4">
                 <div className="space-y-2">
@@ -820,21 +622,92 @@ Please confirm my exact total with delivery fees so I can pay! 🙏`;
                         .map(addr => (
                           <button
                             key={addr.id}
-                            className="bg-white p-3 rounded-xl border border-border hover:border-primary transition-all text-left flex items-center gap-3 active:scale-95"
+                            onClick={() => {
+                              setSelectedAddress(addr)
+                              setManualAddress({ location: '', estate: '', houseNumber: '', landmark: '' })
+                            }}
+                            className={cn(
+                              "p-3 rounded-xl border transition-all text-left flex items-center gap-3 active:scale-95 w-full",
+                              selectedAddress?.id === addr.id
+                                ? "bg-primary/5 border-primary shadow-sm"
+                                : "bg-white border-border hover:border-primary/50"
+                            )}
                           >
-                            <div className="p-2 bg-rose-50 text-rose-500 rounded-lg">
+                            <div className={cn(
+                              "p-2 rounded-lg transition-colors",
+                              selectedAddress?.id === addr.id ? "bg-primary text-white" : "bg-rose-50 text-rose-500"
+                            )}>
                               <MapPin className="h-4 w-4" />
                             </div>
-                            <div className="truncate">
+                            <div className="truncate flex-1">
                               <p className="font-bold text-xs truncate">{addr.location}</p>
                               {addr.phone_number && (
                                 <p className="text-[9px] text-muted-foreground uppercase font-medium">{addr.phone_number}</p>
                               )}
                             </div>
-                            {addr.is_default && <Check className="ml-auto h-3 w-3 text-green-500" />}
+                            {selectedAddress?.id === addr.id && (
+                              <div className="bg-primary rounded-full p-0.5">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            )}
                           </button>
                         ))}
+
+                      <button
+                        onClick={() => setSelectedAddress(null)}
+                        className={cn(
+                          "p-3 rounded-xl border transition-all text-left flex items-center gap-3 active:scale-95 w-full",
+                          !selectedAddress
+                            ? "bg-primary/5 border-primary shadow-sm"
+                            : "bg-white border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className={cn(
+                          "p-2 rounded-lg transition-colors",
+                          !selectedAddress ? "bg-primary text-white" : "bg-slate-50 text-slate-500"
+                        )}>
+                          <Plus className="h-4 w-4" />
+                        </div>
+                        <div className="truncate flex-1">
+                          <p className="font-bold text-xs truncate">Use Different Address</p>
+                          <p className="text-[9px] text-muted-foreground uppercase font-medium">Enter details manually</p>
+                        </div>
+                      </button>
                     </div>
+                  </div>
+                )}
+
+                {!selectedAddress && (
+                  <div className="space-y-3 pt-2 text-left">
+                    <div className="relative group">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                      <Input
+                        placeholder="General Location (e.g. Kilimani, Nairobi)"
+                        className="bg-white h-11 pl-10 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm font-bold"
+                        value={manualAddress.location}
+                        onChange={(e) => setManualAddress(prev => ({ ...prev, location: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        placeholder="Estate Name"
+                        className="bg-white h-11 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+                        value={manualAddress.estate}
+                        onChange={(e) => setManualAddress(prev => ({ ...prev, estate: e.target.value }))}
+                      />
+                      <Input
+                        placeholder="House Number"
+                        className="bg-white h-11 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm"
+                        value={manualAddress.houseNumber}
+                        onChange={(e) => setManualAddress(prev => ({ ...prev, houseNumber: e.target.value }))}
+                      />
+                    </div>
+                    <Input
+                      placeholder="Nearest Landmark (Optional)"
+                      className="bg-white h-11 rounded-xl border-border focus:ring-primary/20 shadow-none text-sm italic"
+                      value={manualAddress.landmark}
+                      onChange={(e) => setManualAddress(prev => ({ ...prev, landmark: e.target.value }))}
+                    />
                   </div>
                 )}
 
@@ -935,7 +808,7 @@ Please confirm my exact total with delivery fees so I can pay! 🙏`;
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110" />
           <span className="text-3xl filter drop-shadow-md">🎁</span>
           <p className="text-sm font-bold mt-2 text-primary">Special Gift Card Included!</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Every order supports our local beauty community</p>
+          <p className="text-[10px] text-muted-foreground mt-1"><b>Just ensure to come back</b></p>
         </div>
 
 

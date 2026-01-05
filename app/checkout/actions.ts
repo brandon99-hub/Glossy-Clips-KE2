@@ -52,6 +52,12 @@ export async function createOrder(data: OrderInput, customerId?: number) {
         delivery_method,
         delivery_fee,
         pickup_mtaani_location,
+        address_type,
+        estate_name,
+        house_number,
+        landmark,
+        latitude,
+        longitude,
         status
       ) VALUES (
         ${referenceCode},
@@ -64,6 +70,12 @@ export async function createOrder(data: OrderInput, customerId?: number) {
         ${validated.deliveryMethod || "self-pickup"},
         ${validated.deliveryFee || 0},
         ${validated.pickupMtaaniLocationId ? validated.pickupLocation : null},
+        ${validated.address_type || null},
+        ${validated.estate_name || null},
+        ${validated.house_number || null},
+        ${validated.landmark || null},
+        ${validated.latitude || null},
+        ${validated.longitude || null},
         'pending'
       )
       RETURNING id

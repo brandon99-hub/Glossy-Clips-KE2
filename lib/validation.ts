@@ -15,6 +15,12 @@ export const orderSchema = z.object({
     deliveryMethod: z.enum(["self-pickup", "pickup-mtaani", "door-to-door"]).optional(),
     deliveryFee: z.number().min(0).default(0),
     pickupMtaaniLocationId: z.number().optional(),
+    address_type: z.string().optional(),
+    estate_name: z.string().optional(),
+    house_number: z.string().optional(),
+    landmark: z.string().optional(),
+    latitude: z.number().optional().nullable(),
+    longitude: z.number().optional().nullable(),
     items: z
         .array(
             z.object({
