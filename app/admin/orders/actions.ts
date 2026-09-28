@@ -1,6 +1,7 @@
 "use server"
 
 import { sql, type Order } from "@/lib/db"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 function generateGiftCardCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -21,6 +22,9 @@ function generateSecretCode(): string {
 }
 
 export async function updateOrderStatus(orderId: number, newStatus: Order["status"]) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     // If confirming payment, create gift card and QR code
     if (newStatus === "paid") {

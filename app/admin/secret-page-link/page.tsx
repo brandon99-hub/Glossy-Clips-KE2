@@ -1,14 +1,13 @@
 import { sql } from "@/lib/db"
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 function generateSecretCode() {
     return Math.random().toString(36).substring(2, 10).toUpperCase()
 }
 
 export default async function SecretPageLinkPage() {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
+    const isLoggedIn = await verifyAdminSession()
 
     if (!isLoggedIn) {
         redirect("/admin/login")

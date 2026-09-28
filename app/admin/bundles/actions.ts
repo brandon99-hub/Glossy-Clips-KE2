@@ -2,6 +2,7 @@
 
 import { sql } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 const DEFAULT_BUNDLE_IMAGES = [
   "/cute summer fridays lip gloss key chain charm….jpg",
@@ -23,6 +24,9 @@ export async function createBundle(data: {
   savings: number
   bundle_image?: string | null
 }) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     // If no image provided, use a random default
     const imageToUse = data.bundle_image || getRandomDefaultImage()
@@ -51,6 +55,9 @@ export async function updateBundle(id: number, data: {
   savings: number
   bundle_image?: string | null
 }) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     // If no image provided, keep existing or use random default
     const imageToUse = data.bundle_image || getRandomDefaultImage()
@@ -78,6 +85,9 @@ export async function updateBundle(id: number, data: {
 }
 
 export async function deleteBundle(id: number) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     await sql`DELETE FROM bundles WHERE id = ${id}`
     revalidatePath("/admin/bundles")
@@ -91,6 +101,9 @@ export async function deleteBundle(id: number) {
 }
 
 export async function toggleBundleStatus(id: number, isActive: boolean) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     await sql`UPDATE bundles SET is_active = ${isActive} WHERE id = ${id}`
     revalidatePath("/admin/bundles")

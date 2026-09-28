@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
+import { verifyAdminSession } from "@/lib/admin-auth"
 import { AnalyticsClient } from "./analytics-client"
 import {
     getRevenueData,
@@ -15,8 +15,7 @@ export default async function AnalyticsPage({
 }: {
     searchParams: Promise<{ range?: string }>
 }) {
-    const cookieStore = await cookies()
-    const isAdmin = cookieStore.get("admin_session")
+    const isAdmin = await verifyAdminSession()
 
     if (!isAdmin) {
         redirect("/admin/login")

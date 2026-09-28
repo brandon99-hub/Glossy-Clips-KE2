@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -349,15 +350,15 @@ export function ProductsManager({ products: initialProducts, categories }: { pro
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold">Products</h1>
-                    <p className="text-sm text-muted-foreground">{products.length} items in inventory</p>
-                </div>
-                <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]">
-                    <Plus className="w-4 h-4 mr-2" /> Add Product
-                </Button>
-            </div>
+            <AdminPageHeader
+                title="Products"
+                description={`${products.length} items in inventory`}
+                actions={
+                    <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[44px]">
+                        <Plus className="w-4 h-4 mr-2" /> Add Product
+                    </Button>
+                }
+            />
 
             <div className="flex items-center gap-4 mb-6 bg-card p-2 rounded-lg border border-border">
                 <Search className="w-4 h-4 text-muted-foreground" />

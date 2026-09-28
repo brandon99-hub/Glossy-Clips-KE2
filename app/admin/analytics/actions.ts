@@ -2,6 +2,7 @@
 
 import { sql } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 export type DateRange = "7d" | "30d" | "90d" | "custom"
 
@@ -48,6 +49,9 @@ export async function getRevenueData(
   customStart?: string,
   customEnd?: string
 ): Promise<{ success: boolean; data?: RevenueData[]; error?: string }> {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     let startDate: Date
     const endDate = new Date()
@@ -91,6 +95,9 @@ export async function getTopProducts(
   limit: number = 10,
   dateRange: DateRange = "30d"
 ): Promise<{ success: boolean; data?: TopProduct[]; error?: string }> {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90
     const startDate = new Date()
@@ -140,6 +147,9 @@ export async function getTopProducts(
 export async function getOrderStatusBreakdown(
   dateRange: DateRange = "30d"
 ): Promise<{ success: boolean; data?: OrderStatusData[]; error?: string }> {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90
     const startDate = new Date()
@@ -175,6 +185,9 @@ export async function getSecretCodeMetrics(): Promise<{
   data?: SecretCodeMetrics
   error?: string
 }> {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     const codesResult = await sql`
       SELECT 
@@ -217,6 +230,9 @@ export async function getSecretCodeMetrics(): Promise<{
 export async function getBundlePerformance(
   dateRange: DateRange = "30d"
 ): Promise<{ success: boolean; data?: BundlePerformance; error?: string }> {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90
     const startDate = new Date()
@@ -292,6 +308,9 @@ export async function getBundlePerformance(
 }
 
 export async function exportAnalyticsData(dateRange: DateRange = "30d") {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     const [revenue, topProducts, orderStatus, secretCodes, bundles] = await Promise.all([
       getRevenueData(dateRange),

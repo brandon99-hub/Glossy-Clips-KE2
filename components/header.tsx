@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { ShoppingBag, Settings, UserCircle, ChevronDown, LayoutDashboard, LogOut } from "lucide-react"
-import { useCart } from "@/lib/cart-context"
+import { useCart } from "@/providers"
 import { useSession, signOut } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState } from "react"
@@ -39,11 +39,11 @@ export function Header() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border transition-all">
-      <div className="container mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/70 transition-all">
+      <div className="container mx-auto px-4 md:px-8 py-2.5 flex items-center justify-between">
         {/* Logo - Left */}
         <Link href="/" className="flex items-center z-20">
-          <Image src="/logo.jpeg" alt="GLOSSYCLIPSKE" width={70} height={70} className="rounded-full shadow-sm" />
+          <Image src="/logo.jpeg" alt="GLOSSYCLIPSKE" width={42} height={42} className="h-10 w-10 sm:h-11 sm:w-11 rounded-full shadow-xs object-cover" priority />
         </Link>
 
         {/* Navigation - Centered Absolute on Desktop */}

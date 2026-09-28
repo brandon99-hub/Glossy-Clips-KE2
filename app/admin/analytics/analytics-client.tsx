@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import { Download, TrendingUp, ShoppingCart, Package, QrCode, DollarSign } from "lucide-react"
 import {
     LineChart,
@@ -93,17 +94,16 @@ export function AnalyticsClient({
 
     return (
         <div className="space-y-6">
-            {/* Header with Export */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-                    <p className="text-muted-foreground">Track your business performance</p>
-                </div>
-                <Button onClick={handleExport} disabled={isExporting}>
-                    <Download className="mr-2 h-4 w-4" />
-                    {isExporting ? "Exporting..." : "Export Data"}
-                </Button>
-            </div>
+            <AdminPageHeader
+                title="Analytics"
+                description="Track store revenue trends, order fulfillment, and conversion rates."
+                actions={
+                    <Button onClick={handleExport} disabled={isExporting} variant="outline" size="sm" className="h-9">
+                        <Download className="mr-2 h-4 w-4" />
+                        {isExporting ? "Exporting..." : "Export Data"}
+                    </Button>
+                }
+            />
 
             {/* Date Range Tabs */}
             <Tabs value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)} className="w-full">

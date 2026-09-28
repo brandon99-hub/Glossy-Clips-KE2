@@ -1,10 +1,11 @@
 import type React from "react"
-import { cookies, headers } from "next/headers"
+import { headers } from "next/headers"
 import { AdminSidebar } from "@/components/admin/sidebar"
+import { AdminHeader } from "@/components/admin/admin-header"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies()
-  const isLoggedIn = cookieStore.get("admin_session")
+  const isLoggedIn = await verifyAdminSession()
 
   // Get current pathname to check if we're on auth pages
   const headersList = await headers()
@@ -15,12 +16,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     pathname.includes("/forgot-password") ||
     pathname.includes("/reset-password")
 
-  const showSidebar = isLoggedIn && !isAuthPage
+  const showChrome = isLoggedIn && !isAuthPage
 
   return (
-    <div className="min-h-screen flex">
-      {showSidebar && <AdminSidebar />}
-      <main className={`flex-1 ${showSidebar ? "md:ml-64" : ""}`}>{children}</main>
+    <div className="min-h-screen flex bg-background">
+      {showChrome && <AdminSidebar />}
+      <div className={`flex-1 flex flex-col min-w-0 ${showChrome ? "md:ml-64" : ""}`}>
+        {showChrome && <AdminHeader />}
+        <main className="flex-1">{children}</main>
+      </div>
     </div>
   )
 }

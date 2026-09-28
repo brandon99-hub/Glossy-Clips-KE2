@@ -1,17 +1,13 @@
 "use server"
 
 import { sql } from "@/lib/db"
-import { cookies } from "next/headers"
 import { notifyWaitlist } from "@/app/api/waitlist/actions"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_cache } from "next/cache"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 export async function getAdminWaitlistData() {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Not authenticated" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     try {
         // Get all products with waitlist counts
@@ -41,12 +37,8 @@ export async function getAdminWaitlistData() {
 }
 
 export async function getProductWaitlistDetails(productId: number) {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Not authenticated" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     try {
         const waitlistEntries = await sql`
@@ -68,12 +60,8 @@ export async function getProductWaitlistDetails(productId: number) {
 }
 
 export async function notifyProductWaitlist(productId: number) {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Not authenticated" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     try {
         const result = await notifyWaitlist(productId)
@@ -85,15 +73,19 @@ export async function notifyProductWaitlist(productId: number) {
     }
 }
 
-export async function getTotalWaitlistCount() {
-    try {
-        const result = await sql`
-      SELECT COUNT(DISTINCT id) as total
-      FROM product_waitlists
-    `
-        return result[0]?.total || 0
-    } catch (error) {
-        console.error("Error getting waitlist count:", error)
-        return 0
-    }
-}
+export const getTotalWaitlistCount = unstable_cache(
+    async (): Promise<number> => {
+        try {
+            const result = await sql`
+              SELECT COUNT(DISTINCT id) as total
+              FROM product_waitlists
+            `
+            return Number(result[0]?.total || 0)
+        } catch (error) {
+            console.error("Error getting waitlist count:", error)
+            return 0
+        }
+    },
+    ["admin-waitlist-count"],
+    { revalidate: 30, tags: ["waitlist-count"] }
+)

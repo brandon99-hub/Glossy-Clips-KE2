@@ -27,8 +27,7 @@ import {
     removeFromWaitlist,
 } from "./actions"
 import { RecommendationsSection } from "@/components/recommendations-section"
-import { useWishlist } from "@/lib/wishlist-context"
-import { useCart } from "@/lib/cart-context"
+import { useWishlist, useCart } from "@/providers"
 import type { Product } from "@/lib/db"
 import { toast } from "sonner"
 import { DashboardBottomNav } from "@/components/dashboard-bottom-nav"

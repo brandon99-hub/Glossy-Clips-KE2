@@ -5,7 +5,7 @@ import type {
     PickupMtaaniZone,
     DeliveryChargeParams,
     DeliveryChargeResponse
-} from './types/pickup-mtaani'
+} from '@/types/shipping'
 
 // Fallback locations for Nairobi - DEPRECATED: Using database instead
 const FALLBACK_LOCATIONS: PickupMtaaniLocation[] = []

@@ -14,5 +14,5 @@ export default async function AdminWaitlistPage() {
         )
     }
 
-    return <WaitlistClient initialData={result.data} />
+    return <WaitlistClient initialData={result.data || []} />
 }

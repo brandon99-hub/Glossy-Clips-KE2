@@ -21,13 +21,16 @@ export default function LoginPage() {
         setError("")
 
         const formData = new FormData(e.currentTarget)
+        const email = formData.get("email") as string
+        const password = formData.get("password") as string
+
         const result = await loginAction(formData)
 
         if (result.success) {
-            // Use NextAuth signIn on client side
+            // Use the original form values — never rely on server returning plaintext passwords
             const signInResult = await signIn("credentials", {
-                email: result.email,
-                password: result.password,
+                email,
+                password,
                 redirect: false,
             })
 

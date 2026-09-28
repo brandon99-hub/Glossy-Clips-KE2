@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
 import { exportAnalyticsData, type DateRange } from "../actions"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export async function GET(request: Request) {
-    const cookieStore = await cookies()
-    const isAdmin = cookieStore.get("admin_session")
+    const isAdmin = await verifyAdminSession()
 
     if (!isAdmin) {
         return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })

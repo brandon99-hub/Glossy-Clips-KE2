@@ -72,11 +72,11 @@ export async function getCustomerProfile() {
     }
 
     try {
-        const customers = await sql`
+        const customers = (await sql`
       SELECT id, email, name, phone_number, created_at
       FROM customers
       WHERE id = ${parseInt(session.user.id)}
-    `
+    `) as { id: number; email: string; name: string | null; phone_number: string | null; created_at: string }[]
 
         if (customers.length === 0) {
             return { success: false, error: "Customer not found" }

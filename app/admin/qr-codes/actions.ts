@@ -2,8 +2,12 @@
 
 import { sql } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 export async function markAsExported(id: number) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         await sql`
       UPDATE secret_codes 

@@ -2,8 +2,12 @@
 
 import { sql } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 export async function addTestimonial(formData: FormData) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   const username = formData.get("username") as string
   const profile_image = formData.get("profile_image") as string
   const message = formData.get("message") as string
@@ -34,6 +38,9 @@ export async function addTestimonial(formData: FormData) {
 }
 
 export async function deleteTestimonial(id: number) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     await sql`DELETE FROM testimonials WHERE id = ${id}`
     revalidatePath("/testimonials")
@@ -46,6 +53,9 @@ export async function deleteTestimonial(id: number) {
 }
 
 export async function updateTestimonial(formData: FormData) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   const id = formData.get("id") as string
   const username = formData.get("username") as string
   const profile_image = formData.get("profile_image") as string
@@ -74,6 +84,9 @@ export async function updateTestimonial(formData: FormData) {
 }
 
 export async function toggleApproval(id: number, currentStatus: boolean) {
+  const auth = await requireAdminAuth()
+  if (!auth.authorized) return { success: false, error: auth.error }
+
   try {
     await sql`
       UPDATE testimonials 

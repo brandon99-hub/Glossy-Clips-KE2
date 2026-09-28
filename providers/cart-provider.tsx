@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import type { CartItem } from "./db"
+import type { CartItem } from "@/types/db"
 
 type CartContextType = {
   items: CartItem[]
@@ -18,12 +18,28 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount and sync across tabs/pages
   useEffect(() => {
     const stored = localStorage.getItem("charm-cart")
     if (stored) {
-      setItems(JSON.parse(stored))
+      try {
+        setItems(JSON.parse(stored))
+      } catch (e) {
+        console.error("Failed to parse cart", e)
+      }
     }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "charm-cart" && e.newValue) {
+        try {
+          setItems(JSON.parse(e.newValue))
+        } catch (err) {
+          console.error("Failed to parse updated cart", err)
+        }
+      }
+    }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
   }, [])
 
   // Save cart to localStorage on change

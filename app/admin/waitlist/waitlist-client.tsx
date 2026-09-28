@@ -5,6 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Bell, Package, Mail, Users, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
+import { AdminStatCard } from "@/components/admin/admin-stat-card"
 import { notifyProductWaitlist, getProductWaitlistDetails } from "./actions"
 import { toast } from "sonner"
 import {
@@ -82,48 +84,29 @@ export function WaitlistClient({ initialData }: { initialData: any[] }) {
     const totalPending = products.reduce((sum, p) => sum + Number(p.pending_count), 0)
 
     return (
-        <div className="p-4 sm:p-8">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Product Waitlists</h1>
-                <p className="text-muted-foreground">Manage customer waitlist notifications</p>
-            </div>
+        <div className="p-6 md:p-8">
+            <AdminPageHeader
+                title="Product Waitlists"
+                description="Manage customer waitlists and dispatch restock alerts."
+            />
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-card border rounded-lg p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <Package className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Products with Waitlists</p>
-                            <p className="text-2xl font-bold">{products.length}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-card border rounded-lg p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-100 rounded-lg">
-                            <Users className="w-6 h-6 text-purple-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Total Customers</p>
-                            <p className="text-2xl font-bold">{totalWaitlist}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-card border rounded-lg p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-orange-100 rounded-lg">
-                            <Bell className="w-6 h-6 text-orange-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Pending Notifications</p>
-                            <p className="text-2xl font-bold">{totalPending}</p>
-                        </div>
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <AdminStatCard
+                    title="Products with Waitlists"
+                    value={products.length}
+                    icon={Package}
+                />
+                <AdminStatCard
+                    title="Total Customers"
+                    value={totalWaitlist}
+                    icon={Users}
+                />
+                <AdminStatCard
+                    title="Pending Notifications"
+                    value={totalPending}
+                    icon={Bell}
+                />
             </div>
 
             {/* Products List */}

@@ -9,6 +9,7 @@ import { QRStatistics } from "@/components/admin/qr-statistics"
 import { QRCodePDFExporter } from "@/components/admin/qr-pdf-export"
 import { QRBulkExport } from "@/components/admin/qr-bulk-export"
 import { Checkbox } from "@/components/ui/checkbox"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import Image from "next/image"
 
 interface QRCodesClientProps {
@@ -93,11 +94,10 @@ export function QRCodesClient({ codesWithQr }: QRCodesClientProps) {
 
     return (
         <div className="p-6 md:p-8">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold">Secret QR Codes</h1>
-                <p className="text-muted-foreground">QR codes to include in order packages</p>
-            </div>
+            <AdminPageHeader
+                title="Secret QR Codes"
+                description="Generate, track, and export printable QR codes for order packaging."
+            />
 
             {/* Statistics */}
             <QRStatistics {...stats} />

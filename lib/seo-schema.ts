@@ -1,7 +1,7 @@
 import type { Product } from "@/lib/db"
 
 export function generateProductSchema(product: Product, reviews?: any[]) {
-    const schema = {
+    const schema: Record<string, any> = {
         "@context": "https://schema.org",
         "@type": "Product",
         name: product.name,

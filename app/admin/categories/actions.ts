@@ -2,6 +2,7 @@
 
 import { sql } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
+import { requireAdminAuth } from '@/lib/admin-auth'
 
 function generateSlug(name: string): string {
     return name
@@ -13,6 +14,9 @@ function generateSlug(name: string): string {
 }
 
 export async function createCategory(formData: FormData) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         const name = formData.get('name') as string
         const description = formData.get('description') as string
@@ -43,6 +47,9 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(formData: FormData) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         const id = parseInt(formData.get('id') as string)
         const name = formData.get('name') as string
@@ -75,6 +82,9 @@ export async function updateCategory(formData: FormData) {
 }
 
 export async function deleteCategory(id: number) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         // Check if any products use this category
         const products = await sql`SELECT COUNT(*) as count FROM products WHERE category = (SELECT slug FROM categories WHERE id = ${id})`
@@ -95,6 +105,9 @@ export async function deleteCategory(id: number) {
 }
 
 export async function updateCategoryOrder(categoryId: number, newOrder: number) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         await sql`
       UPDATE categories

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { sql, type SecretCode, type Product } from "@/lib/db"
 import { SecretMenuPage } from "./secret-menu"
 import { markAsScanned } from "@/app/admin/qr-codes/actions"
-import { cookies } from "next/headers"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export default async function SecretPage({
   params,
@@ -10,8 +10,7 @@ export default async function SecretPage({
   params: Promise<{ code: string }>
 }) {
   const { code } = await params
-  const cookieStore = await cookies()
-  const isAdmin = cookieStore.get("admin_session")
+  const isAdmin = await verifyAdminSession()
 
   // Validate the secret code
   const codes = await sql`

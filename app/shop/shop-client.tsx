@@ -134,17 +134,13 @@ export function ShopClient({ initialProducts, maxPrice }: ShopClientProps) {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            {/* Search */}
-            <div className="mb-8">
-                <SearchInputWithAutocomplete />
-            </div>
-
-            {/* Filters - Full Width, No Sidebar */}
+            {/* Search and Filters */}
             <div className="mb-6">
                 <ProductFiltersImproved
                     filters={filters}
                     onFiltersChange={setFilters}
                     maxPrice={maxPrice}
+                    searchInput={<SearchInputWithAutocomplete className="max-w-none mx-0" />}
                 />
             </div>
 

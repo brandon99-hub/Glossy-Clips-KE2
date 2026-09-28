@@ -1,25 +1,27 @@
 import { sql } from "@/lib/db"
+import type { Bundle, Product } from "@/types/db"
 import { BundlesManager } from "./bundles-manager"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
 
 export const dynamic = "force-dynamic"
 
-async function getBundles() {
+async function getBundles(): Promise<Bundle[]> {
   try {
     const bundles = await sql`
       SELECT * FROM bundles ORDER BY created_at DESC
     `
-    return bundles
+    return bundles as Bundle[]
   } catch {
     return []
   }
 }
 
-async function getProducts() {
+async function getProducts(): Promise<Product[]> {
   try {
     const products = await sql`
       SELECT id, name, price, images FROM products WHERE is_active = true ORDER BY name
     `
-    return products
+    return products as Product[]
   } catch {
     return []
   }
@@ -30,11 +32,10 @@ export default async function BundlesPage() {
 
   return (
     <div className="p-6 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Bundle Deals</h1>
-        <p className="text-muted-foreground">Create special combo deals to boost sales</p>
-      </div>
-
+      <AdminPageHeader
+        title="Bundle Deals"
+        description="Create special product bundles and promotional combos to boost sales."
+      />
       <BundlesManager initialBundles={bundles} products={products} />
     </div>
   )

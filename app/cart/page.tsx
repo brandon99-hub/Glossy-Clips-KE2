@@ -54,7 +54,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { useCart } from "@/lib/cart-context"
+import { useCart } from "@/providers"
 import type { PickupMtaaniLocation, CustomerAddress } from "@/lib/db"
 import { getCustomerAddresses, getCustomerProfile } from "@/app/dashboard/actions"
 import { useSession } from "next-auth/react"

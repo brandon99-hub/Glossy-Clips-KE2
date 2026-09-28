@@ -1,6 +1,35 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { rateLimit, getRateLimitKey } from "./lib/rate-limit"
+import { createHmac, timingSafeEqual } from "crypto"
+
+/**
+ * Inline HMAC verification — cannot call async server functions from middleware.
+ * Token format: <random-hex>.<HMAC-SHA256-hex>
+ */
+function isValidAdminToken(sessionValue: string): boolean {
+    // Reject the old insecure literal "true" cookie
+    if (sessionValue === "true") return false
+
+    const dotIndex = sessionValue.lastIndexOf(".")
+    if (dotIndex === -1) return false
+
+    const token = sessionValue.slice(0, dotIndex)
+    const signature = sessionValue.slice(dotIndex + 1)
+    const secret = process.env.NEXTAUTH_SECRET
+
+    if (!secret || !token || !signature) return false
+
+    try {
+        const expectedSig = createHmac("sha256", secret).update(token).digest("hex")
+        const sigBuf = Buffer.from(signature, "hex")
+        const expBuf = Buffer.from(expectedSig, "hex")
+        if (sigBuf.length !== expBuf.length) return false
+        return timingSafeEqual(sigBuf, expBuf)
+    } catch {
+        return false
+    }
+}
 
 export function middleware(request: NextRequest) {
     const requestHeaders = new Headers(request.headers)
@@ -32,6 +61,27 @@ export function middleware(request: NextRequest) {
         "Content-Security-Policy",
         "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
     )
+
+    // Admin Route Protection
+    if (request.nextUrl.pathname.startsWith("/admin")) {
+        const isAuthPage =
+            request.nextUrl.pathname === "/admin/login" ||
+            request.nextUrl.pathname.startsWith("/admin/forgot-password") ||
+            request.nextUrl.pathname.startsWith("/admin/reset-password")
+
+        const adminSession = request.cookies.get("admin_session")?.value
+        const isValidSession = adminSession ? isValidAdminToken(adminSession) : false
+
+        if (!isValidSession && !isAuthPage) {
+            const loginUrl = new URL("/admin/login", request.url)
+            loginUrl.searchParams.set("from", request.nextUrl.pathname)
+            return NextResponse.redirect(loginUrl)
+        }
+
+        if (isValidSession && isAuthPage) {
+            return NextResponse.redirect(new URL("/admin/orders", request.url))
+        }
+    }
 
     // Rate Limiting for API routes (EXCLUDE NextAuth)
     if (

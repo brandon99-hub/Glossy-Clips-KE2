@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export default async function AdminPage() {
-  const cookieStore = await cookies()
-  const isLoggedIn = cookieStore.get("admin_session")
+  const isLoggedIn = await verifyAdminSession()
 
   if (!isLoggedIn) {
     redirect("/admin/login")

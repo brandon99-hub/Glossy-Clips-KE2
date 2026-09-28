@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import { ShoppingBag } from "lucide-react"
 import type { Product } from "@/lib/db"
 import { WishlistButton } from "@/components/wishlist-button"
-import { useCart } from "@/lib/cart-context"
+import { useCart } from "@/providers"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 

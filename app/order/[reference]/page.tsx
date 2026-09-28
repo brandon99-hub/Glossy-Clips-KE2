@@ -9,10 +9,10 @@ export default async function OrderPage({
 }) {
   const { reference } = await params
 
-  const orders = await sql<Order[]>`
+  const orders = (await sql`
     SELECT * FROM orders 
     WHERE reference_code = ${reference}
-  `
+  `) as Order[]
 
   if (!orders.length) {
     notFound()
@@ -22,9 +22,9 @@ export default async function OrderPage({
 
   // If payment confirmed and no gift card, redirect to success
   if (order.mpesa_confirmed && order.gift_card_id) {
-    const giftCards = await sql<GiftCard[]>`
+    const giftCards = (await sql`
       SELECT * FROM gift_cards WHERE id = ${order.gift_card_id}
-    `
+    `) as GiftCard[]
     if (giftCards.length) {
       redirect(`/success/${reference}`)
     }

@@ -2,7 +2,7 @@
 
 import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useWishlist } from "@/lib/wishlist-context"
+import { useWishlist } from "@/providers"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 

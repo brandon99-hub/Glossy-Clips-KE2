@@ -9,6 +9,10 @@ export async function loginAction(formData: FormData) {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
+    if (!email || !password) {
+        return { success: false, error: "Email and password are required" }
+    }
+
     try {
         // Verify credentials
         const customers = await sql`
@@ -29,8 +33,8 @@ export async function loginAction(formData: FormData) {
         // Migrate wishlist
         await migrateWishlistToAccount(customer.id)
 
-        // Return success - client will handle signIn
-        return { success: true, email, password }
+        // Return success — NO plaintext password. Client uses its own form values to call signIn.
+        return { success: true }
     } catch (error) {
         console.error("Login error:", error)
         return { success: false, error: "Login failed" }
@@ -42,6 +46,20 @@ export async function registerAction(formData: FormData) {
     const password = formData.get("password") as string
     const name = formData.get("name") as string
     const phone = formData.get("phone") as string
+
+    // Server-side input validation
+    if (!email || !password || !name) {
+        return { success: false, error: "All fields are required" }
+    }
+
+    if (password.length < 8) {
+        return { success: false, error: "Password must be at least 8 characters" }
+    }
+
+    // Validate Kenyan phone number format
+    if (phone && !/^(07|01)\d{8}$/.test(phone)) {
+        return { success: false, error: "Invalid phone number format (e.g. 0712345678)" }
+    }
 
     try {
         // Check if user already exists
@@ -59,7 +77,7 @@ export async function registerAction(formData: FormData) {
         // Create customer
         const customers = await sql`
       INSERT INTO customers (email, password_hash, name, phone_number)
-      VALUES (${email}, ${passwordHash}, ${name}, ${phone})
+      VALUES (${email}, ${passwordHash}, ${name}, ${phone || null})
       RETURNING id
     ` as Customer[]
 
@@ -68,8 +86,8 @@ export async function registerAction(formData: FormData) {
         // Migrate session wishlist to new account
         await migrateWishlistToAccount(customerId)
 
-        // Return success with credentials for client-side signIn
-        return { success: true, email, password }
+        // Return success — NO plaintext password. Client uses its own form values to call signIn.
+        return { success: true }
     } catch (error) {
         console.error("Registration error:", error)
         return { success: false, error: "Failed to create account" }
@@ -82,6 +100,14 @@ export async function createAccountFromOrder(data: {
     referenceCode: string
     name?: string
 }) {
+    if (!data.email || !data.password || !data.referenceCode) {
+        return { success: false, error: "Missing required fields" }
+    }
+
+    if (data.password.length < 8) {
+        return { success: false, error: "Password must be at least 8 characters" }
+    }
+
     try {
         // Check if user exists
         const existing = await sql`
@@ -114,10 +140,11 @@ export async function createAccountFromOrder(data: {
         // Migrate session wishlist to new account
         await migrateWishlistToAccount(customerId)
 
-        // Return success with credentials for client-side signIn
-        return { success: true, customerId, email: data.email, password: data.password }
+        // Return success — NO plaintext password echoed back
+        return { success: true, customerId }
     } catch (error) {
         console.error("Account creation error:", error)
         return { success: false, error: "Failed to create account" }
     }
 }
+

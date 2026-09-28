@@ -1,15 +1,14 @@
 import { sql, type Product, type Category } from "@/lib/db"
 import { ProductsManager } from "./products-manager"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export const metadata = {
     title: "Products | Admin",
 }
 
 export default async function AdminProductsPage() {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
+    const isLoggedIn = await verifyAdminSession()
 
     if (!isLoggedIn) {
         redirect("/admin/login")

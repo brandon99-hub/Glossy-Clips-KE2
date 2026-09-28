@@ -6,7 +6,7 @@ import { Check, Package, AlertCircle, Search, ChevronDown, ChevronUp } from "luc
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
-import { useCart } from "@/lib/cart-context"
+import { useCart } from "@/providers"
 import { toast } from "sonner"
 import { useCategories } from "@/hooks/use-categories"
 

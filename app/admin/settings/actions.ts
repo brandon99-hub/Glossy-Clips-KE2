@@ -2,15 +2,11 @@
 
 import { sql } from "@/lib/db"
 import bcrypt from "bcryptjs"
-import { cookies } from "next/headers"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 export async function updateAdminEmail(email: string) {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Unauthorized" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     if (!email || !email.includes("@")) {
         return { success: false, error: "Invalid email address" }
@@ -31,12 +27,8 @@ export async function updateAdminEmail(email: string) {
 }
 
 export async function updateAdminPassword(currentPassword: string, newPassword: string) {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Unauthorized" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     if (newPassword.length < 8) {
         return { success: false, error: "Password must be at least 8 characters" }
@@ -75,12 +67,8 @@ export async function updateAdminPassword(currentPassword: string, newPassword: 
 }
 
 export async function getAdminSettings() {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Unauthorized" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     try {
         const users = await sql`
@@ -99,12 +87,8 @@ export async function getAdminSettings() {
 }
 
 export async function getDiscountSetting() {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Unauthorized" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     try {
         const settings = await sql`
@@ -122,12 +106,8 @@ export async function getDiscountSetting() {
 }
 
 export async function updateDiscountSetting(discountPercent: number) {
-    const cookieStore = await cookies()
-    const isLoggedIn = cookieStore.get("admin_session")
-
-    if (!isLoggedIn) {
-        return { success: false, error: "Unauthorized" }
-    }
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
 
     if (discountPercent < 1 || discountPercent > 100) {
         return { success: false, error: "Discount must be between 1% and 100%" }

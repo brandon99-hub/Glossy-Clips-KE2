@@ -9,9 +9,16 @@ export function useCategories() {
 
     useEffect(() => {
         fetch('/api/categories')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch categories: ${res.statusText}`)
+                }
+                return res.json()
+            })
             .then(data => {
-                setCategories(data)
+                if (Array.isArray(data)) {
+                    setCategories(data)
+                }
                 setLoading(false)
             })
             .catch(err => {

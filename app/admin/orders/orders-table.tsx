@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useCallback, useTransition, useOptimistic } from "react"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import Image from "next/image"
 import { Clock, CheckCircle, Package, MapPin, Loader2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,14 +19,40 @@ const statusConfig = {
 
 export function OrdersTable({ orders }: { orders: Order[] }) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState<number | null>(null)
-  const [filter, setFilter] = useState<string>("all")
+  const [isPending, startTransition] = useTransition()
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+  // Read filter state from URL — survives navigation and browser refresh
+  const filter = searchParams.get("status") || "all"
+  const searchQuery = searchParams.get("q") || ""
+  const startDate = searchParams.get("from") || ""
+  const endDate = searchParams.get("to") || ""
 
-  const filteredOrders = orders.filter((o) => {
+  // Helper: update a single URL param while keeping others
+  const updateParam = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (value) {
+        params.set(key, value)
+      } else {
+        params.delete(key)
+      }
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      })
+    },
+    [searchParams, router, pathname]
+  )
+
+  const [optimisticOrders, updateOptimisticOrders] = useOptimistic(
+    orders,
+    (state, { id, status }: { id: number; status: string }) =>
+      state.map((o) => (o.id === id ? { ...o, status: status as Order["status"] } : o))
+  )
+
+  const filteredOrders = optimisticOrders.filter((o) => {
     const matchesStatus = filter === "all" || o.status === filter
     const matchesSearch =
       o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,7 +66,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     }
     if (endDate) {
       const end = new Date(endDate)
-      end.setHours(23, 59, 59, 999) // End of the day
+      end.setHours(23, 59, 59, 999)
       matchesDate = matchesDate && new Date(o.created_at) <= end
     }
 
@@ -49,10 +75,15 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
 
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     setLoading(orderId)
+    // Optimistic update — UI reflects change instantly, no flicker
+    startTransition(() => {
+      updateOptimisticOrders({ id: orderId, status: newStatus })
+    })
     await updateOrderStatus(orderId, newStatus as Order["status"])
     router.refresh()
     setLoading(null)
   }
+
 
   return (
     <div>
@@ -66,7 +97,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <Input
                 placeholder="Customer, reference, phone..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => updateParam("q", e.target.value)}
                 className="pl-9 h-10 sm:h-9"
               />
             </div>
@@ -77,7 +108,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => updateParam("from", e.target.value)}
                 className="mt-1.5 h-10 sm:h-9"
               />
             </div>
@@ -86,7 +117,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => updateParam("to", e.target.value)}
                 className="mt-1.5 h-10 sm:h-9"
               />
             </div>
@@ -99,7 +130,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         {["all", "pending", "paid", "packed", "collected"].map((status) => (
           <button
             key={status}
-            onClick={() => setFilter(status)}
+            onClick={() => updateParam("status", status === "all" ? "" : status)}
             className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[36px] ${filter === status
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80 active:bg-muted/90"

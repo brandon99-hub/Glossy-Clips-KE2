@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { Package, MessageSquare, Gift, QrCode, LogOut, Sparkles, Menu, X, PackageOpen, Tag, Settings, Layers, Bell, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -73,10 +74,17 @@ export function AdminSidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="p-6 border-b border-border">
-          <Link href="/admin" className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            <span className="font-semibold">GLOSSYCLIPSKE</span>
+        <div className="h-14 px-6 border-b border-border/70 flex items-center">
+          <Link href="/admin" className="flex items-center gap-2.5 font-semibold tracking-tight text-foreground hover:opacity-90 transition-opacity">
+            <Image
+              src="/logo.jpeg"
+              alt="GLOSSYCLIPSKE"
+              width={28}
+              height={28}
+              className="w-7 h-7 rounded-full shadow-xs object-cover border border-border/70"
+              priority
+            />
+            <span className="text-sm font-bold tracking-wider">GLOSSYCLIPSKE</span>
           </Link>
         </div>
 

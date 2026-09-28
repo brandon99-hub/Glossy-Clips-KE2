@@ -3,6 +3,7 @@
 import { sql } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { requireAdminAuth } from "@/lib/admin-auth"
 
 const productSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -16,6 +17,9 @@ const productSchema = z.object({
 })
 
 export async function createProduct(formData: FormData) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         const rawData = {
             name: formData.get("name"),
@@ -64,6 +68,9 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(formData: FormData) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         const id = formData.get("id")
         const rawData = {
@@ -118,6 +125,9 @@ export async function updateProduct(formData: FormData) {
 }
 
 export async function deleteProduct(id: number) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         await sql`DELETE FROM products WHERE id = ${id}`
         revalidatePath("/admin/products")
@@ -129,6 +139,9 @@ export async function deleteProduct(id: number) {
 }
 
 export async function toggleProductStatus(id: number, isActive: boolean) {
+    const auth = await requireAdminAuth()
+    if (!auth.authorized) return { success: false, error: auth.error }
+
     try {
         await sql`UPDATE products SET is_active = ${isActive} WHERE id = ${id}`
         revalidatePath("/admin/products")

@@ -7,7 +7,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
-    "scrape:pickup-locations": "tsx scripts/scrape-pickup-locations.ts"
+    "scrape:pickup-locations": "tsx scripts/scrapers/scrape-pickup-locations.ts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",

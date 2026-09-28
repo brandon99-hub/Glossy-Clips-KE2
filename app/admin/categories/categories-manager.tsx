@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import Image from "next/image"
 import {
     AlertDialog,
@@ -331,15 +332,15 @@ export function CategoriesManager({ categories: initialCategories }: { categorie
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold">Categories</h1>
-                    <p className="text-muted-foreground">{categories.length} categories</p>
-                </div>
-                <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
-                    <Plus className="w-4 h-4 mr-2" /> Add Category
-                </Button>
-            </div>
+            <AdminPageHeader
+                title="Categories"
+                description={`${categories.length} total categories registered`}
+                actions={
+                    <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <Plus className="w-4 h-4 mr-2" /> Add Category
+                    </Button>
+                }
+            />
 
             <div className="flex items-center gap-4 mb-6 bg-card p-2 rounded-lg border border-border">
                 <Search className="w-4 h-4 text-muted-foreground ml-2" />

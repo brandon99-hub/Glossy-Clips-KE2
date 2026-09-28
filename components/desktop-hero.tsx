@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BundleCarousel } from "@/components/bundle-carousel"
+import { RotatingCategoryButton } from "@/components/rotating-category-button"
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_MPESA_PHONE_NUMBER || "254741991213"
 
@@ -26,7 +27,7 @@ interface DesktopHeroProps {
 
 export function DesktopHero({ bundles = [] }: DesktopHeroProps) {
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-rose-50 via-white to-amber-50 py-24 lg:py-32">
+        <section className="relative overflow-hidden bg-gradient-to-br from-rose-50 via-white to-amber-50 pt-6 pb-14 lg:pt-8 lg:pb-18">
             {/* Decorative Background Elements */}
             <div className="absolute top-0 right-0 w-1/3 h-full bg-rose-100/30 -skew-x-12 transform translate-x-20" />
 
@@ -39,17 +40,17 @@ export function DesktopHero({ bundles = [] }: DesktopHeroProps) {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5 }}
                         >
-                            <span className="inline-flex items-center gap-2 bg-rose-100 text-rose-600 text-sm font-semibold px-4 py-1.5 rounded-full mb-8">
+                            <span className="inline-flex items-center gap-2 bg-rose-100 text-rose-600 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
                                 <Sparkles className="h-4 w-4" />
                                 New Collection Just Dropped
                             </span>
 
-                            <h1 className="text-6xl lg:text-7xl font-bold leading-tight mb-6">
+                            <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-4">
                                 Shine brighter <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500">Every Single Day.</span>
                             </h1>
 
-                            <p className="text-xl text-muted-foreground mb-8 max-w-lg leading-relaxed">
+                            <p className="text-lg text-muted-foreground mb-6 max-w-lg leading-relaxed">
                                 Premium hair accessories and lip glosses designed for the modern aesthetic.
                                 Elevate your daily look with our curated collection.
                             </p>
@@ -60,9 +61,7 @@ export function DesktopHero({ bundles = [] }: DesktopHeroProps) {
                                         Shop Collection <ArrowRight className="ml-2 h-5 w-5" />
                                     </Link>
                                 </Button>
-                                <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base border-2 hover:bg-rose-50/50">
-                                    <Link href="/shop?category=hair-clip">View Lookbook</Link>
-                                </Button>
+                                <RotatingCategoryButton className="h-12 w-44 text-base" />
                             </div>
 
                             <div className="mt-12 flex items-center gap-8 text-sm text-muted-foreground">

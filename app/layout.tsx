@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import { headers } from "next/headers"
 import { Poppins, Dancing_Script } from "next/font/google"
 import "./globals.css"
 import { Header } from "@/components/header"
@@ -6,9 +7,7 @@ import { Footer } from "@/components/footer"
 import { MobileNav } from "@/components/mobile-nav"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
-import { CartProvider } from "@/lib/cart-context"
-import { WishlistProvider } from "@/lib/wishlist-context"
-import { AuthProvider } from "@/components/auth-provider"
+import { AppProviders } from "@/providers"
 import { Toaster } from "sonner"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -63,22 +62,28 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers()
+  const pathname = headersList.get("x-pathname") || ""
+  const isAdmin = pathname.startsWith("/admin")
+
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${dancing.variable} font-sans antialiased`}>
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <Header />
-              <main className="min-h-screen pb-20 md:pb-0">{children}</main>
+        <AppProviders>
+          {!isAdmin && <Header />}
+          <main className={isAdmin ? "min-h-screen" : "min-h-screen pb-20 md:pb-0"}>
+            {children}
+          </main>
+          {!isAdmin && (
+            <>
               <Footer />
               <MobileNav />
               <WhatsAppButton />
               <PWAInstallPrompt />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
+            </>
+          )}
+        </AppProviders>
         <Toaster
           position="top-center"
           toastOptions={{

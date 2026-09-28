@@ -8,5 +8,9 @@ export default async function CategoriesPage() {
     ORDER BY display_order ASC, name ASC
   ` as Category[]
 
-    return <CategoriesManager categories={categories} />
+    return (
+        <div className="p-6 md:p-8">
+            <CategoriesManager categories={categories} />
+        </div>
+    )
 }

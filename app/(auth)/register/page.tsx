@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { Loader2, Mail, Lock, User, Phone, AlertCircle, Sparkles, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ export default function RegisterPage() {
         setError("")
 
         const formData = new FormData(e.currentTarget)
+        const email = formData.get("email") as string
         const password = formData.get("password") as string
         const confirmPassword = formData.get("confirmPassword") as string
 
@@ -32,13 +34,25 @@ export default function RegisterPage() {
         const result = await registerAction(formData)
 
         if (result.success) {
-            router.push("/dashboard")
-            router.refresh()
+            // Sign in with original form values — server never echoes passwords back
+            const signInResult = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            })
+            if (signInResult?.ok) {
+                router.push("/dashboard")
+                router.refresh()
+            } else {
+                // Account created but session failed — redirect to login
+                router.push("/login")
+            }
         } else {
             setError(result.error || "Failed to create account")
         }
         setLoading(false)
     }
+
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-rose-50 via-pink-50 to-white">

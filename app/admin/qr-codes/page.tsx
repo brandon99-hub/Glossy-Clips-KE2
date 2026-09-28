@@ -1,12 +1,11 @@
 import { sql, type SecretCode } from "@/lib/db"
 import QRCode from "qrcode"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { QRCodesClient } from "@/components/admin/qr-codes-client"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export default async function AdminQRCodesPage() {
-  const cookieStore = await cookies()
-  const isLoggedIn = cookieStore.get("admin_session")
+  const isLoggedIn = await verifyAdminSession()
 
   if (!isLoggedIn) {
     redirect("/admin/login")

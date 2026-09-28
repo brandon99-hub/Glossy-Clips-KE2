@@ -5,6 +5,7 @@ import { Search, Clock, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useDebouncedCallback } from "use-debounce"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 interface SearchResult {
     id: number
@@ -19,7 +20,11 @@ interface SearchResult {
 const SEARCH_HISTORY_KEY = "glossyke_search_history"
 const MAX_HISTORY = 5
 
-export function SearchInputWithAutocomplete() {
+interface SearchInputWithAutocompleteProps {
+    className?: string
+}
+
+export function SearchInputWithAutocomplete({ className }: SearchInputWithAutocompleteProps = {}) {
     const [query, setQuery] = useState("")
     const [results, setResults] = useState<SearchResult[]>([])
     const [searchHistory, setSearchHistory] = useState<string[]>([])
@@ -111,7 +116,7 @@ export function SearchInputWithAutocomplete() {
     const showResults = isOpen && results.length > 0
 
     return (
-        <div ref={wrapperRef} className="relative w-full max-w-2xl mx-auto">
+        <div ref={wrapperRef} className={cn("relative w-full max-w-2xl mx-auto", className)}>
             {/* Search Input */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />

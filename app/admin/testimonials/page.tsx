@@ -1,11 +1,11 @@
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { sql, type Testimonial } from "@/lib/db"
 import { TestimonialsManager } from "./testimonials-manager"
+import { AdminPageHeader } from "@/components/admin/admin-page-header"
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export default async function AdminTestimonialsPage() {
-  const cookieStore = await cookies()
-  const isLoggedIn = cookieStore.get("admin_session")
+  const isLoggedIn = await verifyAdminSession()
 
   if (!isLoggedIn) {
     redirect("/admin/login")
@@ -18,11 +18,10 @@ export default async function AdminTestimonialsPage() {
 
   return (
     <div className="p-6 md:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Testimonials</h1>
-        <p className="text-muted-foreground">Manage customer testimonials from IG DMs</p>
-      </div>
-
+      <AdminPageHeader
+        title="Testimonials"
+        description="Review, approve, and showcase authentic customer reviews and social proof."
+      />
       <TestimonialsManager testimonials={testimonials} />
     </div>
   )

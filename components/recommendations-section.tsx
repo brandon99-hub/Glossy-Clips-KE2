@@ -7,7 +7,7 @@ import { Sparkles, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Product } from "@/lib/db"
 import { getProductRecommendations } from "@/app/api/waitlist/actions"
-import { useCart } from "@/lib/cart-context"
+import { useCart } from "@/providers"
 import { toast } from "sonner"
 
 export function RecommendationsSection() {
