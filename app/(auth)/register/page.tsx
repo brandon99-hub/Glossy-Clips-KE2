@@ -4,7 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { Loader2, Mail, Lock, User, Phone, AlertCircle, Sparkles, CheckCircle } from "lucide-react"
+import Image from "next/image"
+import { Loader2, Mail, Lock, User, Phone, AlertCircle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -58,7 +59,15 @@ export default function RegisterPage() {
         <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-rose-50 via-pink-50 to-white">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
+                    <div className="w-16 h-16 mx-auto mb-4 relative">
+                        <Image
+                            src="/logo.jpeg"
+                            alt="GLOSSYCLIPSKE"
+                            fill
+                            className="rounded-full object-cover shadow-md ring-4 ring-rose-100/70"
+                            priority
+                        />
+                    </div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">
                         Join the Gloss Gang!
                     </h1>

@@ -54,7 +54,7 @@ export function AccountCreationPrompt({ referenceCode, orderEmail }: AccountCrea
     }
 
     return (
-        <Card className="mb-6 bg-gradient-to-br from-rose-50 to-amber-50 border-2 border-rose-200 relative overflow-hidden">
+        <Card id="account-creation-section" className="mb-6 bg-gradient-to-br from-rose-50 to-amber-50 border-2 border-rose-200 relative overflow-hidden scroll-mt-8">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-200/30 to-amber-200/30 rounded-full -mr-16 -mt-16" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-200/30 to-rose-200/30 rounded-full -ml-12 -mb-12" />
 
@@ -69,11 +69,11 @@ export function AccountCreationPrompt({ referenceCode, orderEmail }: AccountCrea
                 <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-6 h-6 text-rose-600" />
                     <CardTitle className="text-xl bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
-                        Track Your Order & Unlock Rewards!
+                        Track Your Order & Save Your Gift Card!
                     </CardTitle>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    Create an account to track this order and enjoy exclusive benefits
+                    Create your account below to link this order and keep your gift card credit safe to use on your next order.
                 </p>
             </CardHeader>
 

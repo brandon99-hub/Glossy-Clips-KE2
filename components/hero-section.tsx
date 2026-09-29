@@ -38,6 +38,7 @@ export function HeroSection() {
             height={100}
             className="mx-auto mb-4 sm:mb-6 rounded-full shadow-lg ring-4 ring-rose-100/50 w-[100px] h-[100px] sm:w-[120px] sm:h-[120px]"
             priority
+            loading="eager"
           />
         </motion.div>
 

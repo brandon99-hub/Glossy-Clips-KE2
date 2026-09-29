@@ -125,23 +125,8 @@ export default function AdminLoginPage() {
                 "Sign In"
               )}
             </Button>
-
-            {/* Forgot Password Link */}
-            <div className="text-center">
-              <Link
-                href="/admin/forgot-password"
-                className="text-sm text-gray-600 hover:text-rose-600 transition-colors"
-              >
-                Forgot your password?
-              </Link>
-            </div>
           </form>
         </div>
-
-        {/* Footer Text */}
-        <p className="text-xs text-center text-gray-500 mt-6">
-          First time? Run the setup script to create an admin account.
-        </p>
       </div>
     </div>
   )

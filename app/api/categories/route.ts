@@ -1,16 +1,27 @@
 import { sql } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
+export const revalidate = 300 // Cache for 5 minutes
+
 export async function GET() {
     try {
         const categories = await sql`
-      SELECT * FROM categories 
-      WHERE is_active = true 
-      ORDER BY display_order ASC, name ASC
-    `
-        return NextResponse.json(categories)
+          SELECT * FROM categories 
+          WHERE is_active = true 
+          ORDER BY display_order ASC, name ASC
+        `
+        return NextResponse.json(categories, {
+            headers: {
+                "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+            },
+        })
     } catch (error) {
-        console.error('Error fetching categories:', error)
-        return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
+        console.error('Error fetching categories (using fallback empty array):', error)
+        // Return empty array instead of hard 500 error during Neon cold starts / connection timeouts
+        return NextResponse.json([], {
+            headers: {
+                "Cache-Control": "no-store",
+            },
+        })
     }
 }

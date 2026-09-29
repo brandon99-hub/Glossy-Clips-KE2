@@ -235,3 +235,65 @@ export async function sendBackInStockEmail(
     return { success: false, error: "Failed to send email" }
   }
 }
+
+export async function sendCustomerPasswordResetEmail(email: string, token: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://glossy-clips-ke-2.vercel.app"
+  const resetUrl = `${baseUrl}/reset-password/${token}`
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || `"GLOSSYCLIPSKE" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Reset Your GLOSSYCLIPSKE Password ✨",
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; }
+            .container { max-width: 560px; margin: 0 auto; padding: 24px 16px; }
+            .card { background: #ffffff; border-radius: 16px; border: 1px solid #fce7f3; overflow: hidden; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.08); }
+            .header { background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%); padding: 32px 24px; text-align: center; }
+            .header h1 { color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+            .content { padding: 32px 24px; background: #ffffff; }
+            .button { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%); color: #ffffff !important; text-decoration: none; border-radius: 12px; font-weight: 700; margin: 24px 0; text-align: center; }
+            .link-box { word-break: break-all; background: #fdf2f8; padding: 12px; border-radius: 8px; font-size: 12px; color: #be185d; border: 1px solid #fbcfe8; }
+            .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #94a3b8; }
+            .notice { font-size: 13px; color: #64748b; margin-top: 16px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="card">
+              <div class="header">
+                <h1>GLOSSYCLIPSKE ✨</h1>
+              </div>
+              <div class="content">
+                <h2 style="font-size: 18px; margin-top: 0; color: #0f172a;">Password Reset Request</h2>
+                <p>Hello Gorgeous,</p>
+                <p>We received a request to reset the password for your GLOSSYCLIPSKE account. Click the button below to choose a new password:</p>
+                <div style="text-align: center;">
+                  <a href="${resetUrl}" class="button">Reset My Password</a>
+                </div>
+                <p class="notice">If the button doesn't work, copy and paste this link into your browser:</p>
+                <p class="link-box">${resetUrl}</p>
+                <p class="notice">⚠️ This secure link will expire in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email.</p>
+              </div>
+            </div>
+            <div class="footer">
+              <p>© ${new Date().getFullYear()} GLOSSYCLIPSKE • Nairobi, Kenya</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    return { success: true }
+  } catch (error) {
+    console.error("Error sending customer password reset email:", error)
+    return { success: false, error: "Failed to send reset email" }
+  }
+}
+

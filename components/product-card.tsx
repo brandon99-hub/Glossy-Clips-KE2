@@ -14,7 +14,7 @@ interface ProductWithStock extends Product {
   stock_quantity?: number
 }
 
-export function ProductCard({ product }: { product: ProductWithStock }) {
+export function ProductCard({ product, priority = false }: { product: ProductWithStock; priority?: boolean }) {
   const isLowStock = product.stock_quantity !== undefined && product.stock_quantity <= 5 && product.stock_quantity > 0
   const isOutOfStock = product.stock_quantity !== undefined && product.stock_quantity === 0
   const { addItem } = useCart()
@@ -57,6 +57,9 @@ export function ProductCard({ product }: { product: ProductWithStock }) {
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
 
           {/* Desktop: Hover overlay with Add to Cart */}

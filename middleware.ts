@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { rateLimit, getRateLimitKey } from "./lib/rate-limit"
-import { createHmac, timingSafeEqual } from "crypto"
 
 /**
- * Inline HMAC verification — cannot call async server functions from middleware.
+ * Edge-compatible Web Crypto HMAC-SHA256 verification.
  * Token format: <random-hex>.<HMAC-SHA256-hex>
  */
-function isValidAdminToken(sessionValue: string): boolean {
+async function isValidAdminToken(sessionValue: string): Promise<boolean> {
     // Reject the old insecure literal "true" cookie
-    if (sessionValue === "true") return false
+    if (!sessionValue || sessionValue === "true") return false
 
     const dotIndex = sessionValue.lastIndexOf(".")
     if (dotIndex === -1) return false
@@ -21,17 +20,33 @@ function isValidAdminToken(sessionValue: string): boolean {
     if (!secret || !token || !signature) return false
 
     try {
-        const expectedSig = createHmac("sha256", secret).update(token).digest("hex")
-        const sigBuf = Buffer.from(signature, "hex")
-        const expBuf = Buffer.from(expectedSig, "hex")
-        if (sigBuf.length !== expBuf.length) return false
-        return timingSafeEqual(sigBuf, expBuf)
+        const encoder = new TextEncoder()
+        const key = await crypto.subtle.importKey(
+            "raw",
+            encoder.encode(secret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+        )
+        const expectedSigBuf = await crypto.subtle.sign("HMAC", key, encoder.encode(token))
+        const expectedSigHex = Array.from(new Uint8Array(expectedSigBuf))
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join("")
+
+        if (signature.length !== expectedSigHex.length) return false
+
+        // Constant-time XOR comparison to prevent timing attacks
+        let mismatch = 0
+        for (let i = 0; i < signature.length; i++) {
+            mismatch |= signature.charCodeAt(i) ^ expectedSigHex.charCodeAt(i)
+        }
+        return mismatch === 0
     } catch {
         return false
     }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set("x-pathname", request.nextUrl.pathname)
 
@@ -64,13 +79,17 @@ export function middleware(request: NextRequest) {
 
     // Admin Route Protection
     if (request.nextUrl.pathname.startsWith("/admin")) {
-        const isAuthPage =
-            request.nextUrl.pathname === "/admin/login" ||
+        // Redirect any direct access to admin reset routes back to login
+        if (
             request.nextUrl.pathname.startsWith("/admin/forgot-password") ||
             request.nextUrl.pathname.startsWith("/admin/reset-password")
+        ) {
+            return NextResponse.redirect(new URL("/admin/login", request.url))
+        }
 
+        const isAuthPage = request.nextUrl.pathname === "/admin/login"
         const adminSession = request.cookies.get("admin_session")?.value
-        const isValidSession = adminSession ? isValidAdminToken(adminSession) : false
+        const isValidSession = adminSession ? await isValidAdminToken(adminSession) : false
 
         if (!isValidSession && !isAuthPage) {
             const loginUrl = new URL("/admin/login", request.url)

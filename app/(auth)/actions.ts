@@ -2,8 +2,10 @@
 
 import { sql } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import type { Customer } from "@/lib/db"
 import { migrateWishlistToAccount } from "@/lib/wishlist-migration"
+import { sendCustomerPasswordResetEmail } from "@/lib/email"
 
 export async function loginAction(formData: FormData) {
     const email = formData.get("email") as string
@@ -145,6 +147,112 @@ export async function createAccountFromOrder(data: {
     } catch (error) {
         console.error("Account creation error:", error)
         return { success: false, error: "Failed to create account" }
+    }
+}
+
+async function ensureCustomerPasswordResetsTable() {
+    await sql`
+        CREATE TABLE IF NOT EXISTS customer_password_resets (
+            id SERIAL PRIMARY KEY,
+            customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+            token TEXT NOT NULL UNIQUE,
+            expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+    `
+}
+
+export async function requestCustomerPasswordReset(email: string) {
+    if (!email || !email.includes("@")) {
+        return { success: false, error: "Please enter a valid email address" }
+    }
+
+    try {
+        await ensureCustomerPasswordResetsTable()
+
+        const customers = await sql`
+            SELECT id, email FROM customers WHERE email = ${email}
+        ` as Customer[]
+
+        // Anti-enumeration: always return success so attackers cannot probe for registered emails
+        if (customers.length === 0) {
+            return {
+                success: true,
+                message: "If an account exists with this email, you will receive password reset instructions.",
+            }
+        }
+
+        const customer = customers[0]
+        const token = crypto.randomUUID()
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+
+        // Clear any old active tokens for this customer
+        await sql`
+            DELETE FROM customer_password_resets WHERE customer_id = ${customer.id}
+        `
+
+        await sql`
+            INSERT INTO customer_password_resets (customer_id, token, expires_at)
+            VALUES (${customer.id}, ${token}, ${expiresAt})
+        `
+
+        // Send customer email
+        await sendCustomerPasswordResetEmail(customer.email, token)
+
+        return {
+            success: true,
+            message: "If an account exists with this email, you will receive password reset instructions.",
+        }
+    } catch (error) {
+        console.error("Password reset request error:", error)
+        return { success: false, error: "Failed to process request. Please try again." }
+    }
+}
+
+export async function resetCustomerPassword(token: string, newPassword: string) {
+    if (!token || !newPassword) {
+        return { success: false, error: "Token and password are required" }
+    }
+
+    if (newPassword.length < 8) {
+        return { success: false, error: "Password must be at least 8 characters" }
+    }
+
+    try {
+        await ensureCustomerPasswordResetsTable()
+
+        const resetEntries = await sql`
+            SELECT r.*, c.email 
+            FROM customer_password_resets r
+            JOIN customers c ON c.id = r.customer_id
+            WHERE r.token = ${token}
+        `
+
+        if (resetEntries.length === 0) {
+            return { success: false, error: "Invalid or expired password reset link" }
+        }
+
+        const resetEntry = resetEntries[0]
+        if (new Date(resetEntry.expires_at) < new Date()) {
+            await sql`DELETE FROM customer_password_resets WHERE token = ${token}`
+            return { success: false, error: "This password reset link has expired" }
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10)
+
+        await sql`
+            UPDATE customers 
+            SET password_hash = ${passwordHash}, updated_at = NOW()
+            WHERE id = ${resetEntry.customer_id}
+        `
+
+        // Delete used token
+        await sql`DELETE FROM customer_password_resets WHERE token = ${token}`
+
+        return { success: true }
+    } catch (error) {
+        console.error("Reset password error:", error)
+        return { success: false, error: "Failed to reset password. Please try again." }
     }
 }
 

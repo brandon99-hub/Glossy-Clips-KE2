@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 import confetti from "canvas-confetti"
-import { X, Home, ShoppingBag } from "lucide-react"
+import { X, Home, ShoppingBag, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function GiftCardRevealModal() {
@@ -80,7 +80,7 @@ export function GiftCardRevealModal() {
                     </button>
 
                     {/* Modal content */}
-                    <div className="w-full max-w-3xl">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto px-2 py-4">
                         <AnimatePresence mode="wait">
                             {!isRevealed ? (
                                 isMobile ? (
@@ -418,17 +418,29 @@ function ScratchCard({ onReveal }: { onReveal: () => void }) {
     )
 }
 
-// Revealed card with navigation buttons
+// Revealed card with navigation and account conversion action
 function RevealedCard({ onClose }: { onClose: () => void }) {
+    const handleClaimAccount = () => {
+        onClose()
+        setTimeout(() => {
+            const prompt = document.getElementById("account-creation-section")
+            if (prompt) {
+                prompt.scrollIntoView({ behavior: "smooth", block: "center" })
+                const nameInput = prompt.querySelector<HTMLInputElement>("input#name")
+                if (nameInput) nameInput.focus()
+            }
+        }, 150)
+    }
+
     return (
         <motion.div
             initial={{ scale: 0.8, opacity: 0, rotateY: -90 }}
             animate={{ scale: 1, opacity: 1, rotateY: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="relative"
+            className="relative max-w-md sm:max-w-lg mx-auto"
         >
             {/* Gift card */}
-            <div className="relative w-full aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/50 mb-8">
+            <div className="relative w-full aspect-[16/10] max-h-[220px] rounded-2xl overflow-hidden shadow-2xl ring-4 ring-white/50 mb-5 mx-auto">
                 <Image
                     src="/gift-card.jpeg"
                     alt="Gift Card"
@@ -437,8 +449,8 @@ function RevealedCard({ onClose }: { onClose: () => void }) {
                 />
 
                 {/* Decorative sparkles */}
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-yellow-400 rounded-full blur-2xl opacity-50 animate-pulse" />
-                <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-pink-400 rounded-full blur-2xl opacity-50 animate-pulse" />
+                <div className="absolute -top-4 -right-4 w-20 h-20 bg-yellow-400 rounded-full blur-2xl opacity-50 animate-pulse" />
+                <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-pink-400 rounded-full blur-2xl opacity-50 animate-pulse" />
             </div>
 
             {/* Thank you message */}
@@ -446,30 +458,28 @@ function RevealedCard({ onClose }: { onClose: () => void }) {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-center mb-8"
+                className="text-center mb-6"
             >
-                <h2 className="text-white text-4xl font-bold mb-2">Thank You! 💖</h2>
-                <p className="text-white/80 text-lg">You're amazing! Enjoy your free gift card ✨</p>
+                <h2 className="text-white text-2xl sm:text-3xl font-bold mb-2">Thank You! 💖</h2>
+                <p className="text-white/90 text-sm sm:text-base leading-relaxed">
+                    Keep your gift card credit safe to use on your next order!
+                </p>
             </motion.div>
 
-            {/* Navigation buttons */}
+            {/* Navigation and conversion buttons */}
             <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                transition={{ delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-3"
             >
                 <Button
-                    asChild
                     size="lg"
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 text-white border-white/30 font-medium h-12"
-                    onClick={onClose}
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold h-12 shadow-lg shadow-rose-500/30"
+                    onClick={handleClaimAccount}
                 >
-                    <Link href="/">
-                        <Home className="mr-2 h-4 w-4" />
-                        Back Home
-                    </Link>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Claim & Save to Account
                 </Button>
                 <Button
                     asChild
